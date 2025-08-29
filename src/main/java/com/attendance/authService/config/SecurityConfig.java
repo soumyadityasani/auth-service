@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers( "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/delete-all-user-by-role").permitAll()
+                        .requestMatchers("/api/auth/health-check").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session
