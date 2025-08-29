@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ApiResonseDto<T> {
+public class ApiResponseDto<T> {
     private boolean success;
     private String message;
     private T data;

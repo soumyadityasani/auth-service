@@ -1,6 +1,6 @@
 package com.attendance.authService.exceptions;
 
-import com.attendance.authService.dto.ApiResonseDto;
+import com.attendance.authService.dto.ApiResponseDto;
 import com.attendance.authService.dto.ExceptionRespone;
 import com.attendance.authService.enums.ErrorCodeEnum;
 import com.attendance.authService.enums.ExceptionEnum;
@@ -23,8 +23,8 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResonseDto<ExceptionRespone>> userNotFound(UserNotFoundException e){
-        ApiResonseDto<ExceptionRespone> responseDto = ApiResonseDto.<ExceptionRespone>builder()
+    public ResponseEntity<ApiResponseDto<ExceptionRespone>> userNotFound(UserNotFoundException e){
+        ApiResponseDto<ExceptionRespone> responseDto = ApiResponseDto.<ExceptionRespone>builder()
                 .success(false)
                 .message(ExceptionEnum.USER_NOT_FOUND.getMessage())
                 .data(new ExceptionRespone(e.getMessage()))
@@ -35,8 +35,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(EmailSendFailException.class)
-    private ResponseEntity<ApiResonseDto<ExceptionRespone>> emailSendFail(EmailSendFailException e){
-        ApiResonseDto<ExceptionRespone> responseDto = ApiResonseDto.<ExceptionRespone>builder()
+    private ResponseEntity<ApiResponseDto<ExceptionRespone>> emailSendFail(EmailSendFailException e){
+        ApiResponseDto<ExceptionRespone> responseDto = ApiResponseDto.<ExceptionRespone>builder()
                 .success(false)
                 .message(ExceptionEnum.FAIL_TO_SEND_OTP.getMessage())
                 .data(new ExceptionRespone(e.getMessage()))
@@ -47,8 +47,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RoleNotFoundException.class)
-    public ResponseEntity<ApiResonseDto<ExceptionRespone>> roleNotFound(RoleNotFoundException e){
-        ApiResonseDto<ExceptionRespone> responseDto = ApiResonseDto.<ExceptionRespone>builder()
+    public ResponseEntity<ApiResponseDto<ExceptionRespone>> roleNotFound(RoleNotFoundException e){
+        ApiResponseDto<ExceptionRespone> responseDto = ApiResponseDto.<ExceptionRespone>builder()
                 .success(false)
                 .message(ExceptionEnum.ROLE_NOT_FOUND.getMessage())
                 .data(new ExceptionRespone(e.getMessage()))
@@ -59,8 +59,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResonseDto<ExceptionRespone>> handleBadCredentials(BadCredentialsException ex) {
-        ApiResonseDto<ExceptionRespone> responseDto = ApiResonseDto.<ExceptionRespone>builder()
+    public ResponseEntity<ApiResponseDto<ExceptionRespone>> handleBadCredentials(BadCredentialsException ex) {
+        ApiResponseDto<ExceptionRespone> responseDto = ApiResponseDto.<ExceptionRespone>builder()
                 .success(false)
                 .message(ExceptionEnum.INVALID_EMAIL_OR_PASSWORD.getMessage())
                 .data(new ExceptionRespone(ErrorCodeEnum.S_401.getMessage()))
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResonseDto<Map<String, String>>> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new LinkedHashMap<>();
 
         ex.getBindingResult().getAllErrors().forEach(error -> {
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
             }
         });
 
-        ApiResonseDto<Map<String, String>> response = ApiResonseDto.<Map<String, String>>builder()
+        ApiResponseDto<Map<String, String>> response = ApiResponseDto.<Map<String, String>>builder()
                 .success(false)
                 .message(ExceptionEnum.VALIDATION_EXCEPTION.getMessage())
                 .data(errors)
@@ -98,8 +98,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResonseDto<String>> handleConstraintViolation(ConstraintViolationException ex) {
-        ApiResonseDto<String> response = ApiResonseDto.<String>builder()
+    public ResponseEntity<ApiResponseDto<String>> handleConstraintViolation(ConstraintViolationException ex) {
+        ApiResponseDto<String> response = ApiResponseDto.<String>builder()
                 .success(false)
                 .message(ExceptionEnum.VALIDATION_EXCEPTION.getMessage())
                 .data(ex.getMessage())

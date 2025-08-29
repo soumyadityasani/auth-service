@@ -1,6 +1,6 @@
 package com.attendance.authService.util;
 
-import com.attendance.authService.dto.ApiResonseDto;
+import com.attendance.authService.dto.ApiResponseDto;
 import com.attendance.authService.dto.PermissionResponseDto;
 import com.attendance.authService.dto.RoleResponseDto;
 import com.attendance.authService.entity.User;
@@ -36,12 +36,12 @@ public class MyUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities(){
 
         if (role == null) {
-            ApiResonseDto<RoleResponseDto> responseDto = roleClient.getRoleById(user.getRole());
+            ApiResponseDto<RoleResponseDto> responseDto = roleClient.getRoleById(user.getRole());
             role = responseDto.getData().getRole();
         }
 
         if(permission==null){
-            ApiResonseDto<List<PermissionResponseDto>> response =
+            ApiResponseDto<List<PermissionResponseDto>> response =
                     rolePermissionClient.getPermissionForRole(role);
 
             permission = response.getData()

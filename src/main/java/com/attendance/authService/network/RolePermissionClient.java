@@ -1,6 +1,6 @@
 package com.attendance.authService.network;
 
-import com.attendance.authService.dto.ApiResonseDto;
+import com.attendance.authService.dto.ApiResponseDto;
 import com.attendance.authService.dto.PermissionResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,5 +12,5 @@ import java.util.List;
 public interface RolePermissionClient {
 
     @GetMapping("/{role}/permission")
-    public ApiResonseDto<List<PermissionResponseDto>> getPermissionForRole(@PathVariable String role);
+    public ApiResponseDto<List<PermissionResponseDto>> getPermissionForRole(@PathVariable String role);
 }

@@ -22,79 +22,84 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResonseDto<SignUpResponseDto>> registerUser(@Valid @RequestBody SignUpRequestDto requestDto){
+    public ResponseEntity<ApiResponseDto<SignUpResponseDto>> registerUser(@Valid @RequestBody SignUpRequestDto requestDto){
         return authService.registerUser(requestDto);
     }
 
     @PreAuthorize("hasAuthority('CREATE')")
     @PostMapping("/create-account")
-    public ResponseEntity<ApiResonseDto<SignUpResponseDto>> createAccount( @Valid @RequestBody SignUpRequestDto requestDto,Authentication auth){
+    public ResponseEntity<ApiResponseDto<SignUpResponseDto>> createAccount(@Valid @RequestBody SignUpRequestDto requestDto, Authentication auth){
         return authService.createAccount(requestDto,auth);
     }
 
     @GetMapping("/verify-email-link")
-    public ResponseEntity<ApiResonseDto<String>> sendEmail(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email) throws IOException {
+    public ResponseEntity<ApiResponseDto<String>> sendEmail(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email) throws IOException {
         return authService.sentVerifyEmail(email);
     }
 
     @PostMapping("/verify-email-link")
-    public ResponseEntity<ApiResonseDto<VerificationResponseDto>> verifyEmail(@RequestParam @Size(max=36 ,message = "MAX 36 CHARACTER") String token){
+    public ResponseEntity<ApiResponseDto<VerificationResponseDto>> verifyEmail(@RequestParam @Size(max=36 ,message = "MAX 36 CHARACTER") String token){
         return authService.verifyEmail(token);
     }
 
     @GetMapping("/verify-email-code")
-    public ResponseEntity<ApiResonseDto<String>> sendEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
+    public ResponseEntity<ApiResponseDto<String>> sendEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
         return authService.sendOtpToEmail(email);
     }
 
     @PostMapping("/verify-email-code")
-    public ResponseEntity<ApiResonseDto<VerificationResponseDto>> verifyEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String code){
+    public ResponseEntity<ApiResponseDto<VerificationResponseDto>> verifyEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String code){
         return authService.verifyEmailOtp(email,code);
     }
 
     @PostMapping("/sent-otp")
-    public ResponseEntity<ApiResonseDto<String>> sentOtp(@RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String contact){
+    public ResponseEntity<ApiResponseDto<String>> sentOtp(@RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String contact){
         return authService.sendOtpToContact(contact);
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<ApiResonseDto<VerificationResponseDto>> verifyOtp(@RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String contact, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String otp){
+    public ResponseEntity<ApiResponseDto<VerificationResponseDto>> verifyOtp(@RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String contact, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String otp){
         return authService.verifyContactOtp(contact, otp);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResonseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto requestDto){
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto requestDto){
         return authService.loginUser(requestDto);
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<ApiResonseDto<ProfileResponseDto>> getCurrentUserProfile(Authentication auth){
+    public ResponseEntity<ApiResponseDto<ProfileResponseDto>> getCurrentUserProfile(Authentication auth){
         return authService.profileUser(auth);
     }
 
     @PutMapping("/update")
-    public ResponseEntity<ApiResonseDto<UpdateUserResponseDto>> updateUserProfile( @Valid @RequestBody UpdateUserRequestDto requestDto,Authentication authentication){
+    public ResponseEntity<ApiResponseDto<UpdateUserResponseDto>> updateUserProfile(@Valid @RequestBody UpdateUserRequestDto requestDto, Authentication authentication){
         return authService.updateUser(requestDto,authentication);
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<ApiResonseDto<ChangePasswordResponseDto>> changePassword(@Valid @RequestBody ChangePasswordRequestDto requestDto, Authentication auth){
+    public ResponseEntity<ApiResponseDto<ChangePasswordResponseDto>> changePassword(@Valid @RequestBody ChangePasswordRequestDto requestDto, Authentication auth){
         return authService.changePassword(requestDto.getPassword(),requestDto.getNewPassword(),auth);
     }
 
     @PostMapping("/forgot-password-email")
-    public ResponseEntity<ApiResonseDto<String>> forgotPassword(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
+    public ResponseEntity<ApiResponseDto<String>> forgotPassword(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
         return authService.forgotPasswordEmail(email);
     }
 
     @PostMapping("/delete-all-user-by-role")
-    public ResponseEntity<ApiResonseDto<String>> deleteAllUserByRole(@RequestBody RoleRequestDto requestDto){
+    public ResponseEntity<ApiResponseDto<String>> deleteAllUserByRole(@RequestBody RoleRequestDto requestDto){
         return authService.deleteAllUserByRole(requestDto);
     }
 
     @PostMapping("/delete-user-by-username")
-    public ResponseEntity<ApiResonseDto<?>> deleteUserByUsername(@RequestBody UsernameRequestDto requestDto){
+    public ResponseEntity<ApiResponseDto<?>> deleteUserByUsername(@RequestBody UsernameRequestDto requestDto){
         return authService.deleteUserByUsername(requestDto);
+    }
+
+    @GetMapping("/health-check")
+    public ResponseEntity<ApiResponseDto<String>> healthCheck(){
+        return authService.healthCheck();
     }
 
 }
