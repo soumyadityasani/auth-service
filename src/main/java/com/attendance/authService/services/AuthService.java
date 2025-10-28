@@ -339,7 +339,7 @@ public class AuthService {
         ApiResponseDto<LoginResponseDto> resonseDto= ApiResponseDto.<LoginResponseDto>builder()
                     .success(true)
                     .message(MessagesEnum.LOGIN_SUCCESSFUL.getMessage())
-                    .data(new LoginResponseDto(token,user.getRole()))
+                    .data(new LoginResponseDto(token,user.getRole(),user.getAdmissionYear()))
                     .timeStamp(LocalDateTime.now())
                     .build();
 

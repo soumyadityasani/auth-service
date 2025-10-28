@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Year;
 import java.util.Date;
 import java.util.UUID;
 
@@ -45,6 +46,9 @@ public class User {
 //    @ManyToOne(fetch = FetchType.EAGER)
     @Column(name = "role_id",nullable = false)
     private Long role;
+
+    @Column(nullable = false)
+    private String admission_year=String.valueOf(Year.now().getValue());
 
     @Temporal(TemporalType.TIMESTAMP)  //Specify date-time precision
     @Column(name="register_date", updatable = false)  //once inserted cant be update later
