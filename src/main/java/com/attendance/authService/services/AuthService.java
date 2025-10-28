@@ -339,7 +339,7 @@ public class AuthService {
         ApiResponseDto<LoginResponseDto> resonseDto= ApiResponseDto.<LoginResponseDto>builder()
                     .success(true)
                     .message(MessagesEnum.LOGIN_SUCCESSFUL.getMessage())
-                    .data(new LoginResponseDto(token,user.getRole(),user.getAdmissionYear()))
+                    .data(new LoginResponseDto(token,user.getRole()))
                     .timeStamp(LocalDateTime.now())
                     .build();
 
@@ -365,6 +365,7 @@ public class AuthService {
                 .email(userDetails.getUsername())
                 .contact(userDetails.getContact())
                 .role(userDetails.getRole())
+                .admission_year(userDetails.getAdmissionYear())
                 .build();
 
         return ResponseEntity.ok(new ApiResponseDto<>(true,MessagesEnum.USER_PROFILE.getMessage(), profileResponseDto,LocalDateTime.now()));

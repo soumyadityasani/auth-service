@@ -17,6 +17,7 @@ public class ProfileResponseDto {
     private String department;
     private String email;
     private String contact;
+    private String admission_year;
     private String role;
 
 
