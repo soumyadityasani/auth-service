@@ -3,6 +3,7 @@ package com.attendance.authService.services;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,9 @@ import java.util.function.Function;
 public class JWTService {
 
     private final SecretKey secretKey ;
+
+    @Value("${JWT_EXPIRY_MS}")
+    private long jwtExpiryMs;
 
 
 
@@ -48,7 +52,7 @@ public class JWTService {
                 .add(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + "${JWT_EXPIRY}"))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiryMs))
                 .and()
                 .signWith(getKey())
                 .compact();
