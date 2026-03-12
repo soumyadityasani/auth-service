@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "role-permission-service", url = "${rolePermissionClient-service-url}")
+@FeignClient(name = "role-permission-service", url = "${rolePermissionClient-service-url}",
+configuration = RoleClientConfig.class)
 public interface RolePermissionClient {
 
     @GetMapping("/{role}/permission")

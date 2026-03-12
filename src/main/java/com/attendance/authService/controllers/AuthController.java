@@ -26,7 +26,7 @@ public class AuthController {
         return authService.registerUser(requestDto);
     }
 
-    @PreAuthorize("hasAuthority('CREATE')")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
     @PostMapping("/create-account")
     public ResponseEntity<ApiResponseDto<SignUpResponseDto>> createAccount(@Valid @RequestBody SignUpRequestDto requestDto, Authentication auth){
         return authService.createAccount(requestDto,auth);
@@ -72,6 +72,7 @@ public class AuthController {
         return authService.profileUser(auth);
     }
 
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PutMapping("/update")
     public ResponseEntity<ApiResponseDto<UpdateUserResponseDto>> updateUserProfile(@Valid @RequestBody UpdateUserRequestDto requestDto, Authentication authentication){
         return authService.updateUser(requestDto,authentication);
@@ -92,9 +93,10 @@ public class AuthController {
         return authService.deleteAllUserByRole(requestDto);
     }
 
+    @PreAuthorize("hasAuthority('USER_DELETE')")
     @PostMapping("/delete-user-by-username")
-    public ResponseEntity<ApiResponseDto<?>> deleteUserByUsername(@RequestBody UsernameRequestDto requestDto){
-        return authService.deleteUserByUsername(requestDto);
+    public ResponseEntity<ApiResponseDto<?>> deleteUserByUsername(@RequestBody UsernameRequestDto requestDto, Authentication auth){
+        return authService.deleteUserByUsername(requestDto, auth);
     }
 
     @GetMapping("/health-check")

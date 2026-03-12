@@ -44,8 +44,9 @@ public class JWTService {
     // this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         Map<String,Object> claims= new HashMap<>();
+        claims.put("role", role);
 
         return Jwts.builder()
                 .claims()

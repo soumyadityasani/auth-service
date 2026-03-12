@@ -317,9 +317,15 @@ public class AuthService {
 
             MyUserDetails user=(MyUserDetails) authentication.getPrincipal();
 
+            System.out.println("$$$$ UserRoleLong: "+user.getRoleLong()+user.getRole());
+
             ApiResponseDto<RoleResponseDto> roleResponse=roleClient.getRoleById(user.getRoleLong());
 
+            System.out.println("role Response: "+roleResponse);
+
             String role = roleResponse.getData().getRole();
+
+            System.out.println("##### Role: "+role+" ########");
 
             if(!role.equals(requestDto.getRole())){
                 ApiResponseDto<LoginResponseDto> resonseDto= ApiResponseDto.<LoginResponseDto>builder()
@@ -334,7 +340,7 @@ public class AuthService {
             }
 
             //GENERATE Jwt TOKEN
-            String token= jwtService.generateToken(user.getUsername());
+            String token= jwtService.generateToken(user.getUsername(),role);
 
         ApiResponseDto<LoginResponseDto> resonseDto= ApiResponseDto.<LoginResponseDto>builder()
                     .success(true)
@@ -557,7 +563,12 @@ public class AuthService {
 
     }
 
-    public ResponseEntity<ApiResponseDto<?>> deleteUserByUsername(UsernameRequestDto requestDto) {
+    public ResponseEntity<ApiResponseDto<?>> deleteUserByUsername(UsernameRequestDto requestDto, Authentication auth) {
+
+        if(auth==null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDto<>(false,MessagesEnum.UNAUTHORISED_USER.getMessage(), null,LocalDateTime.now()));
+        }
+
         User user=userRepo.findByUsername(requestDto.getUsername()).orElseThrow(()->new UserNotFoundException(ErrorCodeEnum.S_404.getMessage()));
 
         userRepo.delete(user);

@@ -30,15 +30,26 @@ public class MyUserDetails implements UserDetails {
         this.user=user;
         this.roleClient=roleClient;
         this.rolePermissionClient=rolePermissionClient;
+
+        System.out.println("@@@@@@@@@@@@Before Role by id");
+
+        ApiResponseDto<RoleResponseDto> responseDto =
+                roleClient.getRoleById(user.getRole());
+
+        this.role = responseDto.getData().getRole();
+
+        System.out.println("@@@@@@@@@@@@After Role by id");
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(){
 
-        if (role == null) {
-            ApiResponseDto<RoleResponseDto> responseDto = roleClient.getRoleById(user.getRole());
-            role = responseDto.getData().getRole();
-        }
+//        if (role == null) {
+//            ApiResponseDto<RoleResponseDto> responseDto = roleClient.getRoleById(user.getRole());
+//            role = responseDto.getData().getRole();
+//        }
+
+        System.out.println("@@@@@@@@@@@@Before permission by role");
 
         if(permission==null){
             ApiResponseDto<List<PermissionResponseDto>> response =
@@ -53,6 +64,8 @@ public class MyUserDetails implements UserDetails {
                 System.out.println(perm);
             }
         }
+
+        System.out.println("!!!!!!!!After Permission by Role");
 
 //        return Collections.singleton(new SimpleGrantedAuthority(role));
 

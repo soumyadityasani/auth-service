@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "role-permission",url = "${roleClient-service-url}")
+@FeignClient(name = "role-permission",url = "${roleClient-service-url}",
+configuration = RoleClientConfig.class)
 public interface RoleClient {
 
     @GetMapping("/get-role-by-name")
