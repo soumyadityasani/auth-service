@@ -1,11 +1,6 @@
 package com.attendance.authService.util;
 
-import com.attendance.authService.dto.ApiResponseDto;
-import com.attendance.authService.dto.PermissionResponseDto;
-import com.attendance.authService.dto.RoleResponseDto;
 import com.attendance.authService.entity.User;
-import com.attendance.authService.network.RoleClient;
-import com.attendance.authService.network.RolePermissionClient;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,60 +13,33 @@ import java.util.stream.Collectors;
 public class MyUserDetails implements UserDetails {
 
     private User user;
-    private final RolePermissionClient rolePermissionClient;
-    private final RoleClient roleClient;
 
     @Getter
-    private String role;
+    private List<String> roles;   // ✅ MULTIPLE ROLES
 
-    private List<String> permission;
+    @Getter
+    private List<String> permissions; // ✅ ALL PERMISSIONS
 
-    public MyUserDetails(User user, RoleClient roleClient,RolePermissionClient rolePermissionClient){
-        this.user=user;
-        this.roleClient=roleClient;
-        this.rolePermissionClient=rolePermissionClient;
-
-        System.out.println("@@@@@@@@@@@@Before Role by id");
-
-        ApiResponseDto<RoleResponseDto> responseDto =
-                roleClient.getRoleById(user.getRole());
-
-        this.role = responseDto.getData().getRole();
-
-        System.out.println("@@@@@@@@@@@@After Role by id");
+    public MyUserDetails(User user, List<String> roles, List<String> permissions) {
+        this.user = user;
+        this.roles = roles;
+        this.permissions = permissions;
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities(){
+    public Collection<? extends GrantedAuthority> getAuthorities() {
 
-//        if (role == null) {
-//            ApiResponseDto<RoleResponseDto> responseDto = roleClient.getRoleById(user.getRole());
-//            role = responseDto.getData().getRole();
-//        }
-
-        System.out.println("@@@@@@@@@@@@Before permission by role");
-
-        if(permission==null){
-            ApiResponseDto<List<PermissionResponseDto>> response =
-                    rolePermissionClient.getPermissionForRole(role);
-
-            permission = response.getData()
-                    .stream()
-                    .map(PermissionResponseDto::getPermission)
-                    .toList();
-
-            for(String perm:permission){
-                System.out.println(perm);
-            }
-        }
-
-        System.out.println("!!!!!!!!After Permission by Role");
-
-//        return Collections.singleton(new SimpleGrantedAuthority(role));
-
-        return permission.stream()
+        // ✅ Combine ROLE + PERMISSIONS
+        List<GrantedAuthority> authorities = permissions.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
+
+        authorities.addAll(roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role)) // or "ROLE_" + role
+                .collect(Collectors.toList()));
+
+
+        return authorities;
     }
 
     @Override
@@ -104,36 +72,29 @@ public class MyUserDetails implements UserDetails {
         return true;
     }
 
+    // ✅ Custom methods
 
-    //Custom
     public String getFullName() {
         return user.getUsername();
     }
 
-    public String getCollegeRoll(){
-        return user.getCollegeRoll();
-    }
+//    public String getCollegeRoll() {
+//        return user.getCollegeRoll();
+//    }
 
-    public String getContact(){
+    public String getContact() {
         return user.getContact();
     }
 
-    public Long getRoleLong(){
-        return user.getRole();
-    }
+//    public String getStudentId() {
+//        return user.getStudentId();
+//    }
 
-    public String getStudentId(){
-        return user.getStudentId();
-    }
-
-    public String getDepartment(){
+    public String getDepartment() {
         return user.getDepartment();
     }
 
-    public String getAdmissionYear(){
-        return user.getAdmission_year();
-    }
-
-
-
+//    public String getAdmissionYear() {
+//        return user.getAdmission_year();
+//    }
 }

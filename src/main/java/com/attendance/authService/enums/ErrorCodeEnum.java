@@ -4,7 +4,8 @@ public enum ErrorCodeEnum {
 
     S_401("S_401"),
     S_400("S_400"),
-    S_404("S_404");
+    S_404("S_404"),
+    S_403("S_403");
 
     private final String message;
 

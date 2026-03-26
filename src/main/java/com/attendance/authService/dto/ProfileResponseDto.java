@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,7 +20,7 @@ public class ProfileResponseDto {
     private String email;
     private String contact;
     private String admission_year;
-    private String role;
+    private List<String> role;
 
 
 }

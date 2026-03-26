@@ -5,8 +5,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Year;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -20,15 +21,8 @@ public class User {
     private UUID id;
 
     @Column(nullable = false)
-    @Size(max = 10)
-    private String studentId;
-
-    @Column(nullable = false)
-    @Size(max = 20, min = 3)
+    @Size(max = 25, min = 3)
     private String username;
-
-    @Column(name="college_roll", unique = true)
-    private String collegeRoll;
 
     @Column(nullable = false)
     @Size(max = 20,min=1)
@@ -43,12 +37,12 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-//    @ManyToOne(fetch = FetchType.EAGER)
-    @Column(name = "role_id",nullable = false)
-    private Long role;
+    // ✅ Student mapping
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Student student;
 
-    @Column(nullable = false)
-    private String admission_year=String.valueOf(Year.now().getValue());
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserRole> userRoles = new ArrayList<>();
 
     @Temporal(TemporalType.TIMESTAMP)  //Specify date-time precision
     @Column(name="register_date", updatable = false)  //once inserted cant be update later

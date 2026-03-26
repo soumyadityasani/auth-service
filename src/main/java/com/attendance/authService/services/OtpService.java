@@ -1,15 +1,18 @@
 package com.attendance.authService.services;
 
 import com.attendance.authService.entity.PendingOtp;
+import com.attendance.authService.exceptions.OtpResponseException;
 import com.attendance.authService.repo.PendingOtpRepo;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class OtpService {
@@ -19,6 +22,14 @@ public class OtpService {
 
     @Autowired
     private PendingOtpRepo pendingOtpRepo;
+
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final long OTP_EXPIRATION = 5; // minutes
+
+    public OtpService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     public boolean sendOtp(String contact) {
 
@@ -76,6 +87,38 @@ public class OtpService {
             return true;
         }
         return false;
+    }
+
+
+
+    // ✅ Generate + Store OTP in Redis
+    public String generateAndSaveOtp(String email) {
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+
+        String key = "OTP:EMAIL:" + email;
+
+        redisTemplate.opsForValue().set(key, otp, OTP_EXPIRATION, TimeUnit.MINUTES);
+
+        return otp;
+    }
+
+    // ✅ Validate OTP
+    public void validateOtp(String email, String otp) {
+
+        String key = "OTP:EMAIL:" + email;
+
+        String storedOtp = (String) redisTemplate.opsForValue().get(key);
+
+        if (storedOtp == null) {
+            throw new OtpResponseException("EXPIRED OTP");
+        }
+
+        if (!storedOtp.equals(otp)) {
+            throw new OtpResponseException("INVALID OTP");
+        }
+
+        // ✅ Delete after success (VERY IMPORTANT)
+        redisTemplate.delete(key);
     }
 }
 

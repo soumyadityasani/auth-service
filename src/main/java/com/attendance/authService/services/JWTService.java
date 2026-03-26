@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -44,9 +45,9 @@ public class JWTService {
     // this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, List<String> roles) {
         Map<String,Object> claims= new HashMap<>();
-        claims.put("role", role);
+        claims.put("role", roles);
 
         return Jwts.builder()
                 .claims()

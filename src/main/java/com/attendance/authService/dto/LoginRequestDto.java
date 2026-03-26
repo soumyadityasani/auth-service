@@ -1,6 +1,9 @@
 package com.attendance.authService.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
@@ -19,8 +22,8 @@ public class LoginRequestDto {
     @Size(max=12, message = "MAX 12 CHARACTERS")
     private String password;
 
-    @NotNull(message = "ROLE IS REQUIRE")
-    private String role;
+//    @NotNull(message = "ROLE IS REQUIRE")
+//    private List<String> role;
 
     // Getters and Setters
 }

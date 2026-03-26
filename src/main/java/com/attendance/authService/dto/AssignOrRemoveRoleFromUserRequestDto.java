@@ -1,15 +1,19 @@
 package com.attendance.authService.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponseDto {
-    private String token;
-    private List<String> role;
+@NoArgsConstructor
+@Builder
+public class AssignOrRemoveRoleFromUserRequestDto {
+
+    private String username;
+
+    private List<String> roles;
 }

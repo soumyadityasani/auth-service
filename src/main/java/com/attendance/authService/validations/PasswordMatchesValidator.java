@@ -1,12 +1,12 @@
 package com.attendance.authService.validations;
 
-import com.attendance.authService.dto.SignUpRequestDto;
+import com.attendance.authService.dto.BaseSignUpRequestDto;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, SignUpRequestDto> {
+public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, BaseSignUpRequestDto> {
     @Override
-    public boolean isValid(SignUpRequestDto signupRequestDto, ConstraintValidatorContext context) {
+    public boolean isValid(BaseSignUpRequestDto signupRequestDto, ConstraintValidatorContext context) {
         if(signupRequestDto.getPassword()==null || signupRequestDto.getConfirmPassword()==null){
             return false;
         }

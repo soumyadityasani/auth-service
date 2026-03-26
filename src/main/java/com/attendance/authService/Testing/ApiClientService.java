@@ -2,7 +2,7 @@ package com.attendance.authService.Testing;
 
 import com.attendance.authService.dto.LoginRequestDto;
 import com.attendance.authService.dto.LoginResponseDto;
-import com.attendance.authService.dto.SignUpRequestDto;
+import com.attendance.authService.dto.BaseSignUpRequestDto;
 import com.attendance.authService.dto.UpdateUserRequestDto;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,11 +20,11 @@ public class ApiClientService {
         this.restTemplate = restTemplate;
     }
 
-    public String registerUser(SignUpRequestDto requestDto) {
+    public String registerUser(BaseSignUpRequestDto requestDto) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<SignUpRequestDto> request = new HttpEntity<>(requestDto, headers);
+        HttpEntity<BaseSignUpRequestDto> request = new HttpEntity<>(requestDto, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(

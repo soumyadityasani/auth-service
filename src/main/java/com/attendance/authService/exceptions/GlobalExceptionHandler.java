@@ -109,6 +109,42 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(AdminRoleDeletionException.class)
+    public ResponseEntity<ApiResponseDto<?>> adminRoleDeletionException(AdminRoleDeletionException ex){
+        ApiResponseDto<?> response= ApiResponseDto.builder()
+                .success(false)
+                .message("ADMIN DELETION RESTRICTED")
+                .data(ex.getMessage())
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN );
+    }
+
+    @ExceptionHandler(RoleResponseException.class)
+    public ResponseEntity<ApiResponseDto<?>> roleResponseException(RoleResponseException ex){
+        ApiResponseDto<?> response= ApiResponseDto.builder()
+                .success(false)
+                .message("ROLES INVALID")
+                .data(ex.getMessage())
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND );
+    }
+
+    @ExceptionHandler(OtpResponseException.class)
+    public ResponseEntity<ApiResponseDto<?>> otpResponseException(RoleResponseException ex){
+        ApiResponseDto<?> response= ApiResponseDto.builder()
+                .success(false)
+                .message("INVALID Otp PROBLEM")
+                .data(ex.getMessage())
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST );
+    }
+
 //    @ExceptionHandler(MethodArgumentNotValidException.class)
 //    public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
 //        Map<String, String> errors = new HashMap<>();
