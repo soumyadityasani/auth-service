@@ -52,6 +52,8 @@ public class AccountsSeeder implements CommandLineRunner {
                     .map(RoleResponseDto::getId)
                     .toList();
 
+            System.out.println("RoleId: "+rolesId);
+
             isAdminPresent= userRoleRepo.existsByRoleIdIn(rolesId);
 
         }catch (Exception e){
