@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -128,6 +130,11 @@ public class AuthController {
     @GetMapping("/get-student-count")
     public ResponseEntity<ApiResponseDto<Long>> getStudentCounts(@RequestBody GetStudentCountDto requestDto){
         return authService.getStudentCount(requestDto);
+    }
+
+    @GetMapping("/get-academic-year")
+    public ResponseEntity<ApiResponseDto<List<String>>> getAcademicYear(@RequestParam String department, @RequestParam String semester){
+        return authService.getAcademicYear(department,semester);
     }
 
     @GetMapping("/health-check")

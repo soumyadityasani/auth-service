@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register-faculty").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register-student").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/get-student-count").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/get-academic-year").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-password-email").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/verify-email-code").permitAll()

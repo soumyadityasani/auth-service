@@ -511,31 +511,62 @@ public class AuthService {
 
     }
 
-    public ResponseEntity<ApiResponseDto<ProfileResponseDto>> profileUser(Authentication auth){
+    public ResponseEntity<ApiResponseDto<ProfileResponseDto>> profileUser(Authentication auth) {
 
-        //UNAUTHENTICATED USER
-        if(auth==null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDto<>(false,MessagesEnum.UNAUTHORISED_USER.getMessage(), null,LocalDateTime.now()));
+        // ❌ UNAUTHENTICATED USER
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDto<>(
+                            false,
+                            MessagesEnum.UNAUTHORISED_USER.getMessage(),
+                            null,
+                            LocalDateTime.now()
+                    ));
         }
 
-        MyUserDetails userDetails=(MyUserDetails) auth.getPrincipal();
+        // ✅ AUTHENTICATED USER
+        MyUserDetails userDetails = (MyUserDetails) auth.getPrincipal();
 
         List<String> roles = userDetails.getRoles();
 
-        //BUILD THE PROFILERESPONSEDTO
-        ProfileResponseDto profileResponseDto=ProfileResponseDto.builder()
-//                .studentId(userDetails.getStudentId())
-                .username(userDetails.getFullName())
-//                .collegeRoll(userDetails.getCollegeRoll())
-                .department(userDetails.getDepartment())
-                .email(userDetails.getUsername())
-                .contact(userDetails.getContact())
+        // 🔥 FETCH USER FROM DB (IMPORTANT for relational mapping)
+        User user = userRepo.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UserNotFoundException("USER NOT FOUND"));
+
+        // 🔥 FETCH STUDENT (via relationship)
+        Student student = user.getStudent();
+
+        // ✅ BUILD STUDENT PROFILE (only if exists)
+        StudentProfileDto studentProfileDto = null;
+
+        if (student != null) {
+            studentProfileDto = StudentProfileDto.builder()
+                    .studentId(student.getStudentId())
+                    .collegeRoll(student.getCollegeRoll())
+                    .admissionYear(student.getAdmissionYear())
+                    .academicYear(student.getAcademicYear())
+                    .semester(student.getSemester())
+                    .build();
+        }
+
+        // ✅ BUILD PROFILE RESPONSE
+        ProfileResponseDto profileResponseDto = ProfileResponseDto.builder()
+                .username(user.getUsername())
+                .department(user.getDepartment())
+                .email(user.getEmail())
+                .contact(user.getContact())
                 .role(roles)
-//                .admission_year(userDetails.getAdmissionYear())
+                .studentProfile(studentProfileDto) // 🔥 important
                 .build();
 
-        return ResponseEntity.ok(new ApiResponseDto<>(true,MessagesEnum.USER_PROFILE.getMessage(), profileResponseDto,LocalDateTime.now()));
-
+        return ResponseEntity.ok(
+                new ApiResponseDto<>(
+                        true,
+                        MessagesEnum.USER_PROFILE.getMessage(),
+                        profileResponseDto,
+                        LocalDateTime.now()
+                )
+        );
     }
 
     public ResponseEntity<ApiResponseDto<UpdateUserResponseDto>> updateUser(UpdateUserRequestDto updateRequestDto, Authentication authentication) {
@@ -1150,4 +1181,49 @@ public class AuthService {
     }
 
 
+    public ResponseEntity<ApiResponseDto<List<String>>> getAcademicYear(String department, String semester) {
+
+        // ❌ VALIDATION
+        if (department == null || department.isBlank() ||
+                semester == null || semester.isBlank()) {
+
+            return ResponseEntity.badRequest().body(
+                    new ApiResponseDto<>(
+                            false,
+                            "Department and Semester are required",
+                            null,
+                            LocalDateTime.now()
+                    )
+            );
+        }
+
+        // 🔥 NORMALIZATION (important for consistency)
+        String dept = department.trim().toUpperCase();
+        String sem = semester.trim();
+
+        // ✅ FETCH FROM DB
+        List<String> academicYears = studentRepo.findAcademicYears(dept, sem);
+
+        // ❌ NO DATA FOUND
+        if (academicYears.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponseDto<>(
+                            false,
+                            "No academic years found",
+                            null,
+                            LocalDateTime.now()
+                    )
+            );
+        }
+
+        // ✅ SUCCESS
+        return ResponseEntity.ok(
+                new ApiResponseDto<>(
+                        true,
+                        "Academic years fetched successfully",
+                        academicYears,
+                        LocalDateTime.now()
+                )
+        );
+    }
 }

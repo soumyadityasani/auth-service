@@ -31,4 +31,12 @@ GROUP BY s.department, s.academicYear, s.semester
 
     // 🔹 Find student by studentId (unique)
     Optional<Student> findByStudentId(String studentId);
+
+    @Query("""
+       SELECT DISTINCT s.academicYear 
+       FROM Student s 
+       WHERE s.department = :department 
+       AND s.semester = :semester
+       """)
+    List<String> findAcademicYears(String department, String semester);
 }

@@ -12,8 +12,6 @@ public class CanteenApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(CanteenApplication.class, args);
-
-		System.out.println("REDIS URL: " + System.getenv("REDIS_PUBLIC_URL"));
 	}
 
 }

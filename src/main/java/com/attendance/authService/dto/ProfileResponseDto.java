@@ -13,14 +13,13 @@ import java.util.List;
 @Builder
 public class ProfileResponseDto {
 
-    private String studentId;
     private String username;
-    private String collegeRoll;
     private String department;
     private String email;
     private String contact;
-    private String admission_year;
     private List<String> role;
+
+    private StudentProfileDto studentProfile= null;
 
 
 }

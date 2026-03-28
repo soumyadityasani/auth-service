@@ -10,9 +10,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+@Entity
 @Data
 @NoArgsConstructor
-@Entity
 @Table(name = "users")
 public class User {
 
