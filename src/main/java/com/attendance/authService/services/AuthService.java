@@ -124,6 +124,7 @@ public class AuthService {
 
         // CREATE USER (NO STUDENT FIELDS)
         User user = new User();
+        user.setUserId(requestDto.getUserId());
         user.setUsername(requestDto.getUsername());
         user.setDepartment(requestDto.getDepartment());
         user.setEmail(requestDto.getEmail());
@@ -175,6 +176,7 @@ public class AuthService {
         }
 
         User user = new User();
+        user.setUserId(requestDto.getStudentId());
         user.setUsername(requestDto.getUsername());
         user.setEmail(requestDto.getEmail());
         user.setContact(requestDto.getContact());
@@ -551,6 +553,7 @@ public class AuthService {
 
         // ✅ BUILD PROFILE RESPONSE
         ProfileResponseDto profileResponseDto = ProfileResponseDto.builder()
+                .userId(user.getUserId())
                 .username(user.getUsername())
                 .department(user.getDepartment())
                 .email(user.getEmail())
@@ -583,6 +586,11 @@ public class AuthService {
 
         User user=userRepo.findByEmail(userDetails.getUsername())
                 .orElseThrow(()->new UserNotFoundException( ErrorCodeEnum.S_404.getMessage()));
+
+        // Update only if new values are provided (non-null)
+        if (updateRequestDto.getUserId() != null && !updateRequestDto.getUserId().isBlank()) {
+            user.setUserId(updateRequestDto.getUserId());
+        }
 
         // Update only if new values are provided (non-null)
         if (updateRequestDto.getUsername() != null && !updateRequestDto.getUsername().isBlank()) {

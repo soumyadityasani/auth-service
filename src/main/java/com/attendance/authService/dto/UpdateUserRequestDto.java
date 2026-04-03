@@ -9,6 +9,9 @@ import lombok.Data;
 public class UpdateUserRequestDto {
 
     @Size(max=20, message = "MAX 20 CHARACTERS")
+    private String userId;
+
+    @Size(max=20, message = "MAX 20 CHARACTERS")
     private String username;
 
     @Email(message = "INVALID EMAIL FORMAT")

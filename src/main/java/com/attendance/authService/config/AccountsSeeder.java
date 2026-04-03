@@ -68,7 +68,7 @@ public class AccountsSeeder implements CommandLineRunner {
             // SAVE THE USER
             User user = new User();
 
-//            user.setStudentId("T00000000");
+            user.setUserId("T00000000");
             user.setUsername("Admin");
 //            user.setCollegeRoll("T00000000");
             user.setDepartment("ALL");

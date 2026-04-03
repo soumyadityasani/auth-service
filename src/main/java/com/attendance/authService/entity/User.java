@@ -21,6 +21,10 @@ public class User {
     private UUID id;
 
     @Column(nullable = false)
+    @Size(max = 20, min = 3)
+    private String userId;
+
+    @Column(nullable = false)
     @Size(max = 25, min = 3)
     private String username;
 

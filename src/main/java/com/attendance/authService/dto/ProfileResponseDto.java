@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class ProfileResponseDto {
 
+    private String userId;
     private String username;
     private String department;
     private String email;

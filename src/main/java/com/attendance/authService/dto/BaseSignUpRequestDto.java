@@ -15,9 +15,9 @@ import java.util.List;
 @PasswordMatches
 public class BaseSignUpRequestDto {
 
-//    @NotBlank(message = "USER ID IS REQUIRE")
-//    @Size(max=10, message = "MAX 10 CHARACTERS")
-//    private String studentId;
+    @NotBlank(message = "USER ID IS REQUIRE")
+    @Size(max=10, message = "MAX 10 CHARACTERS")
+    private String userId;
 
     @NotBlank(message = "NAME IS REQUIRE")
     @Size(max=25, message = "MAX 25 CHARACTERS")
