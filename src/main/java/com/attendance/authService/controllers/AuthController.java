@@ -128,14 +128,19 @@ public class AuthController {
     }
 
     @GetMapping("/get-student-count")
-    public ResponseEntity<ApiResponseDto<Long>> getStudentCounts(@RequestBody GetStudentCountDto requestDto){
-        return authService.getStudentCount(requestDto);
+    public ResponseEntity<ApiResponseDto<Long>> getStudentCounts(@RequestParam String department, @RequestParam String academicYear,@RequestParam String semester){
+        return authService.getStudentCount(department, academicYear,semester);
     }
 
     @GetMapping("/get-academic-year")
     public ResponseEntity<ApiResponseDto<List<String>>> getAcademicYear(@RequestParam String department, @RequestParam String semester){
         return authService.getAcademicYear(department,semester);
     }
+
+//    @GetMapping("/get-all-faculty")
+//    public ResponseEntity<ApiResponseDto<List<ProfileResponseDto>>> getAllFaculty(){
+//        return authService.getAllFaculty();
+//    }
 
     @GetMapping("/health-check")
     public ResponseEntity<ApiResponseDto<String>> healthCheck(){

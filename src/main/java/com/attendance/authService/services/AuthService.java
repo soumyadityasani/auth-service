@@ -1121,12 +1121,11 @@ public class AuthService {
                         .build());
     }
 
-    public ResponseEntity<ApiResponseDto<Long>> getStudentCount(
-            GetStudentCountDto requestDto) {
+    public ResponseEntity<ApiResponseDto<Long>> getStudentCount(String department, String academic_year,String semester) {
 
-        String department= requestDto.getDepartment();
-        String academic_year= requestDto.getAcademicYear();
-        String semester= requestDto.getSemester();
+//        String department= requestDto.getDepartment();
+//        String academic_year= requestDto.getAcademicYear();
+//        String semester= requestDto.getSemester();
 
         try {
 
@@ -1234,4 +1233,8 @@ public class AuthService {
                 )
         );
     }
+
+//    public ResponseEntity<ApiResponseDto<List<ProfileResponseDto>>> getAllFaculty() {
+//
+//    }
 }
