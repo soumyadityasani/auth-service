@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/get-academic-year").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-password-email").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/get-all-students").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/verify-email-code").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-email-code").permitAll()
                         .requestMatchers("/api/auth/health-check").permitAll()

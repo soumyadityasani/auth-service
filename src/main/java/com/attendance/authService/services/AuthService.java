@@ -25,6 +25,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -1237,4 +1239,55 @@ public class AuthService {
 //    public ResponseEntity<ApiResponseDto<List<ProfileResponseDto>>> getAllFaculty() {
 //
 //    }
+
+    public ResponseEntity<ApiResponseDto<Page<StudentResponseDto>>> getAllStudents(String dept, String year, String sem,Pageable pageable) {
+        try {
+            // 1. Fetch data
+            Page<StudentResponseDto> studentsPage = studentRepo.findByFilter(dept,year,sem,pageable);
+
+            // 2. Handle Empty Case (Optional: Return 204 No Content or just empty Page)
+            if (studentsPage.isEmpty()) {
+
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                        new ApiResponseDto<>(
+                                false,
+                                "NO CONTENT BR O",
+                                null,
+                                LocalDateTime.now()
+                        )
+                );
+            }
+
+
+            return ResponseEntity.ok().body(
+                    new ApiResponseDto<>(
+                            true,
+                            "SUCCESS FETCHED",
+                            studentsPage,
+                            LocalDateTime.now()
+                    )
+            );
+
+        } catch (org.springframework.data.mapping.PropertyReferenceException e) {
+            // 3. Handle Invalid Sort Field (e.g., Android sent a field name that doesn't exist)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                    new ApiResponseDto<>(
+                            false,
+                            "INVALID SORT ",
+                            null,
+                            LocalDateTime.now()
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ApiResponseDto<>(
+                            false,
+                            "SERVER PROB lME",
+                            null,
+                            LocalDateTime.now()
+                    )
+            );
+        }
+    }
 }

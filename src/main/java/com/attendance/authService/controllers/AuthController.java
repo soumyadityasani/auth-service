@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -141,6 +143,16 @@ public class AuthController {
 //    public ResponseEntity<ApiResponseDto<List<ProfileResponseDto>>> getAllFaculty(){
 //        return authService.getAllFaculty();
 //    }
+
+    @GetMapping("/get-all-students")
+    public ResponseEntity<ApiResponseDto<Page<StudentResponseDto>>> getAllStudents(
+            @RequestParam String department,
+            @RequestParam String academicYear,
+            @RequestParam String semester,
+            Pageable pageable) {
+        // Example URL: /api/auth/get-all-students?page=0&size=10&sort=studentId,asc
+        return authService.getAllStudents(department, academicYear, semester, pageable);
+    }
 
     @GetMapping("/health-check")
     public ResponseEntity<ApiResponseDto<String>> healthCheck(){
