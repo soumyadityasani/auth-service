@@ -49,6 +49,8 @@ public class SecurityConfig {
 //                        .requestMatchers(HttpMethod.POST, "/api/auth/update-hod").permitAll()
 //                        .requestMatchers(HttpMethod.POST, "/api/auth/assign-coordinator").permitAll()
 //                        .requestMatchers(HttpMethod.POST, "/api/auth/update-coordinator").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/upload-whitelist-email").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/auth/add-whitelist-email-role-faculty").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/get-hod-coordinator").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-password-email").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/get-all-students").permitAll()

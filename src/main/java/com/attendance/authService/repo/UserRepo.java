@@ -26,6 +26,8 @@ public interface UserRepo extends JpaRepository<User,Long> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
 //    @Modifying
 //    @Transactional
 //    @Query("DELETE FROM User u WHERE u.role= :roleId")

@@ -2,12 +2,13 @@ package com.attendance.authService.dto;
 
 
 import com.attendance.authService.validations.PasswordMatches;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -57,8 +58,8 @@ public class BaseSignUpRequestDto {
 //    @Size(max=1, message = "MAX 1 CHARACTERS")
 //    private String semester;
 
-    @NotNull(message = "ROLE IS REQUIRE")
-    private List<String> role;
+//    @NotNull(message = "ROLE IS REQUIRE")
+//    private List<String> role;
 
 }
 

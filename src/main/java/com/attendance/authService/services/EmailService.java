@@ -2,6 +2,7 @@ package com.attendance.authService.services;
 
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -14,6 +15,9 @@ public class EmailService {
         @Autowired
         private JavaMailSender mailSender;
 
+        @Value("${spring.mail.username}")   // ✅ ADD THIS
+        private String fromEmail;
+
         @Autowired
         private TemplateEngine templateEngine;
 
@@ -21,11 +25,12 @@ public class EmailService {
 
     // 🔹 Generic mail sender
     @Async
-    private void sendEmailAsync(String to, String subject, String templateName, Context context) {
+    public void sendEmailAsync(String to, String subject, String templateName, Context context) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
 

@@ -34,6 +34,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(responseDto,HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EmailNotFoundException.class)
+    public ResponseEntity<ApiResponseDto<ExceptionRespone>> emailNotFound(EmailNotFoundException e){
+        ApiResponseDto<ExceptionRespone> responseDto = ApiResponseDto.<ExceptionRespone>builder()
+                .success(false)
+                .message("EMAIL FORBID EN")
+                .data(new ExceptionRespone(e.getMessage()))
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(responseDto,HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(EmailSendFailException.class)
     private ResponseEntity<ApiResponseDto<ExceptionRespone>> emailSendFail(EmailSendFailException e){
         ApiResponseDto<ExceptionRespone> responseDto = ApiResponseDto.<ExceptionRespone>builder()

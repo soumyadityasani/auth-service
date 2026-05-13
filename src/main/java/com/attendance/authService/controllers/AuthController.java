@@ -2,6 +2,7 @@ package com.attendance.authService.controllers;
 
 import com.attendance.authService.dto.*;
 import com.attendance.authService.services.AuthService;
+import com.attendance.authService.services.WhiteListService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -21,6 +23,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private WhiteListService whiteListService;
 
 
     @PostMapping("/register-faculty")
@@ -67,8 +72,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email-code")
-    public ResponseEntity<ApiResponseDto<VerificationResponseDto>> verifyEmailCode(@Valid @RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String code){
-        return authService.verifyEmailOtp(email,code);
+    public ResponseEntity<ApiResponseDto<VerificationResponseDto>> verifyEmailCode(@RequestBody VerifyEmailOtpRequest request){
+        return authService.verifyEmailOtp(request.getEmail(), request.getCode());
     }
 
 //    @PostMapping("/sent-otp")
@@ -167,6 +172,16 @@ public class AuthController {
     @PostMapping("/get-hod-coordinator")
     public ResponseEntity<ApiResponseDto<GetHodOrCoordinatorResponse>> getHodAndCoordinator(@RequestBody GetHodOrCoordinatorRequest request){
         return authService.getHodAndCoordinator(request);
+    }
+
+    @PostMapping("/upload-whitelist-email")
+    public ResponseEntity<ApiResponseDto<UploadWhiteListEmailResponseDto>> uploadEmailWhitList(@ModelAttribute EmailWhiteListDto file) throws IOException {
+        return whiteListService.uploadEmailsFromCSV(file.getFile());
+    }
+
+    @PostMapping("/add-whitelist-email-role-faculty")
+    public ResponseEntity<ApiResponseDto<?>> addEmailRoleFacultyWhiteList(@RequestBody EmailRoleWhiteListDto request){
+        return whiteListService.addEmailRoleFaculty(request);
     }
 
 

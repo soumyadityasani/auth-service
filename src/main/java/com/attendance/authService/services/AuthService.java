@@ -4,10 +4,7 @@ import com.attendance.authService.dto.*;
 import com.attendance.authService.entity.*;
 import com.attendance.authService.enums.ErrorCodeEnum;
 import com.attendance.authService.enums.MessagesEnum;
-import com.attendance.authService.exceptions.AdminRoleDeletionException;
-import com.attendance.authService.exceptions.RoleNotFoundException;
-import com.attendance.authService.exceptions.RoleResponseException;
-import com.attendance.authService.exceptions.UserNotFoundException;
+import com.attendance.authService.exceptions.*;
 import com.attendance.authService.network.RoleClient;
 import com.attendance.authService.repo.*;
 import com.attendance.authService.util.MyUserDetails;
@@ -80,6 +77,12 @@ public class AuthService {
     private CoordinatorRepo coordinatorRepo;
 
     @Autowired
+    private WhiteListService whiteListService;
+
+    @Autowired
+    private EmailRoleWhiteListRepo emailRoleWhiteListRepo;
+
+    @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
@@ -105,10 +108,29 @@ public class AuthService {
                             LocalDateTime.now()));
         }
 
-        // REMOVE DUPLICATE ROLES
-        List<String> uniqueRoles = requestDto.getRole().stream()
+        EmailRoleWhiteList email= emailRoleWhiteListRepo.findByEmailIgnoreCase(requestDto.getEmail()).orElseThrow(
+                ()-> new EmailNotFoundException("S_404")
+        );
+
+        //CHECK FOR STUDENT EMAIL WHITELIST
+//        if (!whiteListService.isEligible(requestDto.getEmail())) {
+//
+//            return ResponseEntity.ok(
+//                    new ApiResponseDto<>(false,
+//                            "EMAIL FORBID DEN",
+//                            null,
+//                            LocalDateTime.now())
+//            );
+//        }
+
+        List<String> uniqueRoles = email.getAssignedRole().stream()
                 .distinct()
                 .toList();
+
+        // REMOVE DUPLICATE ROLES
+//        List<String> uniqueRoles = requestDto.getRole().stream()
+//                .distinct()
+//                .toList();
 
         // FETCH ROLES
         ApiResponseDto<List<RoleResponseDto>> roleResponse;
@@ -149,6 +171,13 @@ public class AuthService {
         // ✅ SINGLE SAVE (CASCADE)
         User savedUser = userRepo.save(user);
 
+        //TRUE THE EMAIL PREVENT FURTHER REGISTRATION
+//        whiteListService.markAsUsed(requestDto.getEmail());
+
+        email.setUsed(true);
+
+        emailRoleWhiteListRepo.save(email);
+
         // RESPONSE
         return ResponseEntity.ok(
                 new ApiResponseDto<>(true,
@@ -170,7 +199,21 @@ public class AuthService {
                             LocalDateTime.now()));
         }
 
-        List<String> uniqueRoles = requestDto.getRole().stream().distinct().toList();
+        //CHECK FOR STUDENT EMAIL WHITELIST
+        if (!whiteListService.isEligible(requestDto.getEmail())) {
+
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(false,
+                            "EMAIL FORBID DEN",
+                            null,
+                            LocalDateTime.now())
+            );
+        }
+
+        List<String> roleList=List.of("STUDENT");
+
+        List<String> uniqueRoles = roleList.stream().distinct().toList();
+//        List<String> uniqueRoles = requestDto.getRole().stream().distinct().toList();
         List<RoleResponseDto> roles = roleClient.getRolesByNames(uniqueRoles).getData();
 
         if (roles == null || roles.isEmpty()) {
@@ -217,6 +260,9 @@ public class AuthService {
 
         // ✅ SAVE
         User savedUser = userRepo.save(user);
+
+        //TRUE THE EMAIL PREVENT FURTHER REGISTRATION
+        whiteListService.markAsUsed(requestDto.getEmail());
 
         // 🔥 REDIS INCREMENT (ADD THIS)
         try {
