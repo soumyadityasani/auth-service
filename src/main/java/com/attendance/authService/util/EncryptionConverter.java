@@ -15,7 +15,7 @@ import java.util.Base64;
 public class EncryptionConverter implements AttributeConverter<String, String> {
 
     // ✅ Reads from active profile's properties
-    @Value("${encryption.enabled}")
+    @Value("${ENCRYPT_VALUE}")
     private boolean encryptionEnabled;
 
     @Value("${AES_SECRET_KEY}")

@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
                 .timeStamp(LocalDateTime.now())
                 .build();
 
-        return new ResponseEntity<>(responseDto,HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(responseDto,HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(EmailSendFailException.class)

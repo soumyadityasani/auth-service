@@ -202,7 +202,7 @@ public class AuthService {
         //CHECK FOR STUDENT EMAIL WHITELIST
         if (!whiteListService.isEligible(requestDto.getEmail())) {
 
-            return ResponseEntity.ok(
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                     new ApiResponseDto<>(false,
                             "EMAIL FORBID DEN",
                             null,
