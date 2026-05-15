@@ -1,5 +1,6 @@
 package com.attendance.authService.entity;
 
+import com.attendance.authService.util.EncryptionConverter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -33,9 +34,11 @@ public class User {
     private String department;
 
     @Column(unique = true, nullable = false)
+    @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
     private String email;
 
     @Column(nullable = false)
+    @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
     private String contact;
 
     @Column(nullable = false)
