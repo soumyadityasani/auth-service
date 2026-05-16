@@ -41,7 +41,7 @@ public class BaseSignUpRequestDto {
     @Size(max=50, message = "MAX  50 CHARACTERS")
     private String email;
 
-    @Pattern(regexp = "^\\d{10}$", message = "Invalid Indian mobile number")
+//    @Pattern(regexp = "^\\d{10}$", message = "Invalid Indian mobile number")
     private String contact;
 
     @NotBlank(message = "PASSWORD IS REQUIRE")

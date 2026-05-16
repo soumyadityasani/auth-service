@@ -37,8 +37,8 @@ public class User {
     @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
     private String email;
 
-    @Column(nullable = false)
-    @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
+    @Column(nullable = true)
+//    @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
     private String contact;
 
     @Column(nullable = false)

@@ -7,10 +7,7 @@ import com.attendance.authService.enums.MessagesEnum;
 import com.attendance.authService.exceptions.*;
 import com.attendance.authService.network.RoleClient;
 import com.attendance.authService.repo.*;
-import com.attendance.authService.util.MyUserDetails;
-import com.attendance.authService.util.PasswordGenerator;
-import com.attendance.authService.util.ScheduleJobs;
-import com.attendance.authService.util.StudentDetails;
+import com.attendance.authService.util.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -81,6 +78,9 @@ public class AuthService {
 
     @Autowired
     private EmailRoleWhiteListRepo emailRoleWhiteListRepo;
+
+    @Autowired
+    private EncryptionConverter encryptionConverter;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;

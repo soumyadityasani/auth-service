@@ -65,4 +65,8 @@ public class EncryptionConverter implements AttributeConverter<String, String> {
             throw new RuntimeException("Decryption failed", e);
         }
     }
+
+    public String encrypt(String plainText) {
+        return convertToDatabaseColumn(plainText); // reuse existing logic
+    }
 }
