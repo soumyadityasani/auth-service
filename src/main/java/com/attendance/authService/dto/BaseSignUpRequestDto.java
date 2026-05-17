@@ -34,7 +34,7 @@ public class BaseSignUpRequestDto {
 
     @Email(message = "INVALID EMAIL FORMAT")
     @Pattern(
-            regexp = "^[a-z0-9]+@(gmail\\.com|yahoo\\.com|outlook\\.com|hotmail\\.com|protonmail\\.com|icloud\\.com|mckvie.edu\\.in)$",
+            regexp = "^[a-zA-Z0-9._%+\\-!#$&'*=/^{|}~`]+@(gmail\\.com|yahoo\\.com|outlook\\.com|hotmail\\.com|protonmail\\.com|icloud\\.com|mckvie.edu\\.in)$",
             message = "Only Gmail, Yahoo, Outlook, Hotmail, Protonmail or Icloud addresses are allowed"
     )
     @NotBlank(message = "EMAIL IS REQUIRED")
