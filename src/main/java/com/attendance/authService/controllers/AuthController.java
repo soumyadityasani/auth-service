@@ -112,7 +112,7 @@ public class AuthController {
         return authService.changePassword(requestDto.getPassword(),requestDto.getNewPassword(),auth);
     }
 
-    @PostMapping("/forgot-password-email")
+    @GetMapping("/forgot-password-email")
     public ResponseEntity<ApiResponseDto<String>> forgotPassword(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
         return authService.forgotPasswordEmail(email);
     }

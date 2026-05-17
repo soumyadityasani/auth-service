@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface WhiteListEmailRepo extends JpaRepository<WhiteListEmail, UUID> {
 
-    Optional<WhiteListEmail> findByEmailIgnoreCase(String email);
+    Optional<WhiteListEmail> findByEmail(String email);
 
-    boolean existsByEmailIgnoreCase(String email);
+    boolean existsByEmail(String email);
 }

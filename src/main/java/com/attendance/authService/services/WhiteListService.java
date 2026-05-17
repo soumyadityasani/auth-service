@@ -7,8 +7,10 @@ import com.attendance.authService.entity.EmailRoleWhiteList;
 import com.attendance.authService.entity.WhiteListEmail;
 import com.attendance.authService.repo.EmailRoleWhiteListRepo;
 import com.attendance.authService.repo.WhiteListEmailRepo;
+import com.attendance.authService.util.EncryptionConverter;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +26,9 @@ public class WhiteListService {
 
     @Autowired
     private EmailRoleWhiteListRepo emailRoleWhiteListRepo;
+
+    @Autowired
+    private EncryptionConverter encryptionConverter;
 
     // Upload CSV of emails
     public ResponseEntity<ApiResponseDto<UploadWhiteListEmailResponseDto>> uploadEmailsFromCSV(MultipartFile file) throws IOException {
@@ -42,8 +47,17 @@ public class WhiteListService {
 
                 String email = cell.getStringCellValue().trim().toLowerCase();
 
-                if (!email.isEmpty() && !whiteListRepo.existsByEmailIgnoreCase(email)) {
-                    whiteListRepo.save(new WhiteListEmail(email));
+                if (email.isEmpty()) continue; // ✅ skip blank cells, don't count
+
+//                String encryptedEmail = encryptionConverter.encrypt(email);
+
+                if (!whiteListRepo.existsByEmail(email)) {
+
+                    WhiteListEmail whiteListEmail = new WhiteListEmail();
+                    whiteListEmail.setEmail(email);
+
+                    whiteListRepo.save(whiteListEmail);
+
                     added++;
                 } else {
                     skipped++;
@@ -64,7 +78,7 @@ public class WhiteListService {
     // Check if email is whitelisted and unused
     public boolean isEligible(String email) {
 
-        return whiteListRepo.findByEmailIgnoreCase(email)
+        return whiteListRepo.findByEmail(email)
                 .map(e -> !e.isUsed())
                 .orElse(false);
     }
@@ -72,7 +86,7 @@ public class WhiteListService {
     // Mark email as used after successful registration
     public void markAsUsed(String email) {
 
-        whiteListRepo.findByEmailIgnoreCase(email)
+        whiteListRepo.findByEmail(email)
                 .ifPresent(e -> {
                     e.setUsed(true);
                     whiteListRepo.save(e);
@@ -80,6 +94,15 @@ public class WhiteListService {
     }
 
     public ResponseEntity<ApiResponseDto<?>> addEmailRoleFaculty(EmailRoleWhiteListDto request) {
+
+        if (emailRoleWhiteListRepo.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiResponseDto<>(false,
+                            "EMAIL ALREADY IN WHITELIST",
+                            null,
+                            LocalDateTime.now()));
+        }
+
         EmailRoleWhiteList entry = new EmailRoleWhiteList();
         entry.setEmail(request.getEmail());
         entry.setAssignedRole(request.getAssignedRole()); // "ROLE_FACULTY", "ROLE_HOD"
@@ -89,7 +112,7 @@ public class WhiteListService {
 
         return  ResponseEntity.ok(new ApiResponseDto<>(
                 true,
-                "UPLOAD SUCCES S",
+                "UPLOAD SUCCESS",
                 null,
                 LocalDateTime.now()
         ));

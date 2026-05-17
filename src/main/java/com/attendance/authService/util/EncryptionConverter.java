@@ -67,6 +67,6 @@ public class EncryptionConverter implements AttributeConverter<String, String> {
     }
 
     public String encrypt(String plainText) {
-        return convertToDatabaseColumn(plainText); // reuse existing logic
+        return convertToDatabaseColumn(plainText.trim()); // reuse existing logic
     }
 }

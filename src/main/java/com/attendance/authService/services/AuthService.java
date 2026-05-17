@@ -108,7 +108,7 @@ public class AuthService {
                             LocalDateTime.now()));
         }
 
-        EmailRoleWhiteList email= emailRoleWhiteListRepo.findByEmailIgnoreCase(requestDto.getEmail()).orElseThrow(
+        EmailRoleWhiteList email= emailRoleWhiteListRepo.findByEmail(requestDto.getEmail()).orElseThrow(
                 ()-> new EmailNotFoundException("S_404")
         );
 
@@ -176,7 +176,7 @@ public class AuthService {
 
         email.setUsed(true);
 
-        emailRoleWhiteListRepo.save(email);
+//        emailRoleWhiteListRepo.save(email);
 
         // RESPONSE
         return ResponseEntity.ok(

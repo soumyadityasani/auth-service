@@ -1,5 +1,6 @@
 package com.attendance.authService.entity;
 
+import com.attendance.authService.util.EncryptionConverter;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,7 @@ public class WhiteListEmail {
     private UUID id;
 
     @Column(unique = true, nullable = false)
+    @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
     private String email;
 
     private boolean used = false; // true once student registers
