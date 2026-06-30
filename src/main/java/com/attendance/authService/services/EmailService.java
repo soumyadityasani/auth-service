@@ -1,10 +1,9 @@
 package com.attendance.authService.services;
 
-import jakarta.mail.internet.MimeMessage;
+import com.attendance.authService.util.BrevoMailSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -14,6 +13,9 @@ import org.thymeleaf.context.Context;
 public class EmailService {
         @Autowired
         private JavaMailSender mailSender;
+
+        @Autowired
+        private BrevoMailSender brevoMailSender;
 
         @Value("${spring.mail.username}")   // ✅ ADD THIS
         private String fromEmail;
@@ -27,17 +29,20 @@ public class EmailService {
     @Async
     public void sendEmailAsync(String to, String subject, String templateName, Context context) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject(subject);
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(to);
+//            helper.setSubject(subject);
+//
+//            String html = templateEngine.process(templateName, context);
+//            helper.setText(html, true);
+//
+//            mailSender.send(message);
 
             String html = templateEngine.process(templateName, context);
-            helper.setText(html, true);
-
-            mailSender.send(message);
+            brevoMailSender.sendHtmlEmail(to, subject, html);
 
         } catch (Exception e) {
             // 🔥 replace with logger later

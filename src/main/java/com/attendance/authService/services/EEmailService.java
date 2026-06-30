@@ -2,11 +2,10 @@ package com.attendance.authService.services;
 
 import com.attendance.authService.entity.PendingEmail;
 import com.attendance.authService.repo.PendingEmailRepo;
-import jakarta.mail.internet.MimeMessage;
+import com.attendance.authService.util.BrevoMailSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -23,6 +22,9 @@ public class EEmailService {
     private JavaMailSender mailSender;
 
     @Autowired
+    private BrevoMailSender brevoMailSender;
+
+    @Autowired
     private TemplateEngine templateEngine;
 
     @Value("${email.verifyUrl}")
@@ -37,45 +39,58 @@ public class EEmailService {
         String separator = emailVerifyUrl.contains("?") ? "&" : "?";
         String verificationUrl = emailVerifyUrl + separator + "token=" + token;
 
-       try {
-           MimeMessage message = mailSender.createMimeMessage();
-           MimeMessageHelper helper = new MimeMessageHelper(message, true);
-           helper.setTo(to);
-           helper.setSubject("Email Verification");
-           Context context = new Context();
-           context.setVariable("verificationUrl", verificationUrl);
-           String html = templateEngine.process("verification-email", context);
-           helper.setText(html, true);
-           mailSender.send(message);
+        Context context = new Context();
+        context.setVariable("verificationUrl", verificationUrl);
+        String html = templateEngine.process("verification-email", context);
 
-           return true;
-       }catch (Exception e){
-           e.printStackTrace();
+        return brevoMailSender.sendHtmlEmail(to, "Email Verification", html);
 
-           return false;
-       }
+//       try {
+//           MimeMessage message = mailSender.createMimeMessage();
+//           MimeMessageHelper helper = new MimeMessageHelper(message, true);
+//           helper.setTo(to);
+//           helper.setSubject("Email Verification");
+//           Context context = new Context();
+//           context.setVariable("verificationUrl", verificationUrl);
+//           String html = templateEngine.process("verification-email", context);
+//           helper.setText(html, true);
+//           mailSender.send(message);
+//
+//           return true;
+//       }catch (Exception e){
+//           e.printStackTrace();
+//
+//           return false;
+//       }
 
     }
 
     public boolean sendVerificationEmailCode(String to, String code) {
 
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(to);
-            helper.setSubject("Email Verification Code");
-            Context context = new Context();
-            context.setVariable("code", code);
-            String html = templateEngine.process("verification-email", context);
-            helper.setText(html, true);
-            mailSender.send(message);
 
-            return true;
-        }catch (Exception e){
-            e.printStackTrace();
+        Context context = new Context();
+        context.setVariable("code", code);
+        String html = templateEngine.process("verification-email", context);
 
-            return false;
-        }
+        return brevoMailSender.sendHtmlEmail(to, "Email Verification Code", html);
+
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+//            helper.setTo(to);
+//            helper.setSubject("Email Verification Code");
+//            Context context = new Context();
+//            context.setVariable("code", code);
+//            String html = templateEngine.process("verification-email", context);
+//            helper.setText(html, true);
+//            mailSender.send(message);
+//
+//            return true;
+//        }catch (Exception e){
+//            e.printStackTrace();
+//
+//            return false;
+//        }
 
     }
 
