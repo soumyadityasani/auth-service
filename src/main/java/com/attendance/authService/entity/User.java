@@ -51,6 +51,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserRole> userRoles = new ArrayList<>();
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private DeviceBinding deviceBinding;
+
     @Temporal(TemporalType.TIMESTAMP)  //Specify date-time precision
     @Column(name="register_date", updatable = false)  //once inserted cant be update later
     private Date registerDate= new Date();

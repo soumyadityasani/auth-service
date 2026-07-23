@@ -22,6 +22,10 @@ public class LoginRequestDto {
     @Size(max=12, message = "MAX 12 CHARACTERS")
     private String password;
 
+
+    @NotBlank(message = "HARDWARE DEVICE ID IS REQUIRED")
+    private String deviceHardwareId;
+
 //    @NotNull(message = "ROLE IS REQUIRE")
 //    private List<String> role;
 

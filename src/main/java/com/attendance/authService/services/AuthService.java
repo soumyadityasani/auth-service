@@ -2,6 +2,7 @@ package com.attendance.authService.services;
 
 import com.attendance.authService.dto.*;
 import com.attendance.authService.entity.*;
+import com.attendance.authService.enums.AuditAction;
 import com.attendance.authService.enums.ErrorCodeEnum;
 import com.attendance.authService.enums.MessagesEnum;
 import com.attendance.authService.exceptions.*;
@@ -72,6 +73,12 @@ public class AuthService {
     
     @Autowired
     private CoordinatorRepo coordinatorRepo;
+
+    @Autowired
+    private DeviceBindingRepo deviceBindingRepo;
+
+    @Autowired
+    private DeviceBindingAuditRepo auditRepo;
 
     @Autowired
     private WhiteListService whiteListService;
@@ -518,6 +525,8 @@ public class AuthService {
             );
         } catch (Exception e) {
 
+            e.printStackTrace();
+
             ApiResponseDto<LoginResponseDto> responseDto = ApiResponseDto.<LoginResponseDto>builder()
                     .success(false)
                     .message(MessagesEnum.FAILED_TO_LOGIN.getMessage())
@@ -541,6 +550,29 @@ public class AuthService {
 
         if (permissions == null || permissions.isEmpty()) {
             throw new RuntimeException("User has no permissions");
+        }
+
+        // ✅ Device binding check — runs only after credentials are verified
+        String userId = user.getUserId();   // however you expose the UUID on MyUserDetails
+        String incomingDeviceHash = requestDto.getDeviceHardwareId();
+
+        Optional<DeviceBinding> existingBinding = deviceBindingRepo.findByUser_UserId(userId);
+
+        if (existingBinding.isEmpty()) {
+            // first login on this account — bind now
+            bindDeviceOnFirstLogin(userId, incomingDeviceHash);
+        } else if (!existingBinding.get().getDeviceHardwareId().equals(incomingDeviceHash)) {
+            // credentials correct, but this is a different device
+            ApiResponseDto<LoginResponseDto> responseDto = ApiResponseDto.<LoginResponseDto>builder()
+                    .success(false)
+                    .message(MessagesEnum.DEVICE_NOT_RECOGNIZED.getMessage())  // add this enum entry
+                    .data(null)
+                    .timeStamp(LocalDateTime.now())
+                    .build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseDto);
+        } else {
+            existingBinding.get().setLastSeenAt(LocalDateTime.now());
+            deviceBindingRepo.save(existingBinding.get());
         }
 
         // ✅ Generate JWT with full claims
@@ -1524,5 +1556,39 @@ public class AuthService {
                         LocalDateTime.now()
                 )
         );
+    }
+
+    @Transactional
+    public void bindDeviceOnFirstLogin(String userId, String deviceHash) {
+        boolean alreadyBound = deviceBindingRepo.findByUser_UserId(userId).isPresent();
+        if (alreadyBound) {
+            return ;
+        }
+
+        Optional<User> user = userRepo.findByUserId(userId);
+
+        DeviceBinding binding = DeviceBinding.builder()
+                .user(user.get())
+                .deviceHardwareId(deviceHash)
+                .boundAt(LocalDateTime.now())
+                .lastSeenAt(LocalDateTime.now())
+                .unbindRequested(false)
+                .build();
+
+        deviceBindingRepo.save(binding);
+
+//        auditRepo.save(buildAudit(userId, null, deviceHash, AuditAction.BIND));
+    }
+
+    private DeviceBindingAudit buildAudit(String userId, String oldHash, String newHash, AuditAction action) {
+        DeviceBindingAudit audit = DeviceBindingAudit.builder()
+                .userId(userId)
+                .oldDeviceId(oldHash)
+                .newDeviceId(newHash)
+                .action(action)
+                .performedAt(LocalDateTime.now())
+                .build();
+
+        return audit;
     }
 }

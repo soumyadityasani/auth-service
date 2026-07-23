@@ -94,6 +94,10 @@ public class MyUserDetails implements UserDetails {
         return user.getDepartment();
     }
 
+    public String getUserId(){
+        return user.getUserId();
+    }
+
 //    public String getAdmissionYear() {
 //        return user.getAdmission_year();
 //    }
