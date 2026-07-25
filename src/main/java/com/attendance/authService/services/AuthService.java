@@ -15,7 +15,9 @@ import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -552,27 +554,48 @@ public class AuthService {
             throw new RuntimeException("User has no permissions");
         }
 
-        // ✅ Device binding check — runs only after credentials are verified
-        String userId = user.getUserId();   // however you expose the UUID on MyUserDetails
-        String incomingDeviceHash = requestDto.getDeviceHardwareId();
+        boolean isStudent = roles.contains("STUDENT");
 
-        Optional<DeviceBinding> existingBinding = deviceBindingRepo.findByUser_UserId(userId);
+        if(isStudent) {
 
-        if (existingBinding.isEmpty()) {
-            // first login on this account — bind now
-            bindDeviceOnFirstLogin(userId, incomingDeviceHash);
-        } else if (!existingBinding.get().getDeviceHardwareId().equals(incomingDeviceHash)) {
-            // credentials correct, but this is a different device
-            ApiResponseDto<LoginResponseDto> responseDto = ApiResponseDto.<LoginResponseDto>builder()
-                    .success(false)
-                    .message(MessagesEnum.DEVICE_NOT_RECOGNIZED.getMessage())  // add this enum entry
-                    .data(null)
-                    .timeStamp(LocalDateTime.now())
-                    .build();
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseDto);
-        } else {
-            existingBinding.get().setLastSeenAt(LocalDateTime.now());
-            deviceBindingRepo.save(existingBinding.get());
+            // ✅ Device binding check — runs only after credentials are verified
+            String userId = user.getUserId();   // however you expose the UUID on MyUserDetails
+            String incomingDeviceHash = requestDto.getDeviceHardwareId();
+
+            Optional<DeviceBinding> existingBinding = deviceBindingRepo.findByUser_UserId(userId);
+
+            if (existingBinding.isEmpty()) {
+                // first login on this account — bind now
+                bindDeviceOnFirstLogin(userId, incomingDeviceHash);
+
+                //Check the Audit Table to see if this is a "Re-entry"
+                // We look for the latest audit log for this user where the new device is null
+                Optional<DeviceBindingAudit> pendingAudit =
+                        auditRepo.findTopByUserIdAndActionAndNewDeviceIdIsNullOrderByPerformedAtDesc(
+                                userId, AuditAction.APPROVED // Pass the "Approved" state here
+                        );
+
+                if (pendingAudit.isPresent()) {
+                    // It's a re-entry! Update the existing audit record
+                    DeviceBindingAudit audit = pendingAudit.get();
+                    audit.setNewDeviceId(incomingDeviceHash);
+                    audit.setAction(AuditAction.REBIND); // Change action to REBIND to show it's complete
+                    auditRepo.save(audit);
+                }
+
+            } else if (!existingBinding.get().getDeviceHardwareId().equals(incomingDeviceHash)) {
+                // credentials correct, but this is a different device
+                ApiResponseDto<LoginResponseDto> responseDto = ApiResponseDto.<LoginResponseDto>builder()
+                        .success(false)
+                        .message(MessagesEnum.DEVICE_NOT_RECOGNIZED.getMessage())  // add this enum entry
+                        .data(null)
+                        .timeStamp(LocalDateTime.now())
+                        .build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseDto);
+            } else {
+                existingBinding.get().setLastSeenAt(LocalDateTime.now());
+                deviceBindingRepo.save(existingBinding.get());
+            }
         }
 
         // ✅ Generate JWT with full claims
@@ -1577,14 +1600,326 @@ public class AuthService {
 
         deviceBindingRepo.save(binding);
 
+        Optional<DeviceBindingAudit> pendingAudit =
+                auditRepo.findTopByUserIdAndNewDeviceIdIsNullOrderByPerformedAtDesc(userId);
+
 //        auditRepo.save(buildAudit(userId, null, deviceHash, AuditAction.BIND));
     }
 
-    private DeviceBindingAudit buildAudit(String userId, String oldHash, String newHash, AuditAction action) {
+    @Transactional
+    public ResponseEntity<ApiResponseDto<Void>> requestDeviceChange(String email, String password) {
+
+        Authentication authentication;
+        try {
+            authentication = authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+        } catch (Exception e) {
+            ApiResponseDto<Void> responseDto = ApiResponseDto.<Void>builder()
+                    .success(false)
+                    .message(MessagesEnum.FAILED_TO_LOGIN.getMessage())
+                    .timeStamp(LocalDateTime.now())
+                    .build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseDto);
+        }
+
+        MyUserDetails user = (MyUserDetails) authentication.getPrincipal();
+        String userId = user.getUserId();
+
+        Optional<DeviceBinding> bindingOpt = deviceBindingRepo.findByUser_UserId(userId);
+        if (bindingOpt.isEmpty()) {
+            ApiResponseDto<Void> responseDto = ApiResponseDto.<Void>builder()
+                    .success(false)
+                    .message("NO DEVICE FOUND")
+                    .timeStamp(LocalDateTime.now())
+                    .build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseDto);
+        }
+
+        DeviceBinding binding = bindingOpt.get();
+        binding.setUnbindRequested(true);
+        deviceBindingRepo.save(binding);
+
+        // 5. ✅ Log the deletion in the audit table
+        auditRepo.save(buildAudit(userId, binding.getDeviceHardwareId(), null, AuditAction.PENDING, null));
+
+        ApiResponseDto<Void> responseDto = ApiResponseDto.<Void>builder()
+                .success(true)
+                .message(MessagesEnum.DEVICE_CHANGE_REQUESTED.getMessage())
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponseDto<Page<PendingDeviceChangeDto>>> getPendingDeviceChanges(
+            int page, int size, Authentication authentication) {
+
+        //Assuming your Authentication Principal holds your user details/ID
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        String coordinatorUserId = userDetails.getUserId(); // O
+
+        // 1. Fetch ALL active roles for this coordinator
+        List<Coordinator> coordinatorRoles = coordinatorRepo.findAllByCoordinator_UserIdAndActiveTrue(coordinatorUserId);
+
+        if (coordinatorRoles.isEmpty()) {
+            throw new IllegalStateException("Not registered as an active coordinator");
+        }
+
+        // 2. Extract the departments and academic years they coordinate
+        List<String> departments = coordinatorRoles.stream()
+                .map(Coordinator::getDepartment)
+                .distinct()
+                .toList();
+
+        List<String> academicYears = coordinatorRoles.stream()
+                .map(Coordinator::getAcademicYear)
+                .distinct()
+                .toList();
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("boundAt").descending());
+
+        Page<DeviceBinding> bindings = deviceBindingRepo
+                .findByUnbindRequestedTrueAndUser_DepartmentInAndUser_Student_AcademicYearIn(
+                        departments, academicYears, pageable);
+
+        Page<PendingDeviceChangeDto> dtoPage = bindings.map(b -> PendingDeviceChangeDto.builder()
+                .userId(b.getUser().getUserId())
+                .username(b.getUser().getUsername())
+                .department(b.getUser().getDepartment()) // ✅ Correct, User entity has department
+                .academicYear(b.getUser().getStudent().getAcademicYear())
+                .semester(b.getUser().getStudent().getSemester())
+                .rollNo(b.getUser().getStudent().getCollegeRoll())
+                .currentDeviceHash(b.getDeviceHardwareId())
+                .boundAt(b.getBoundAt())
+                .lastSeenAt(b.getLastSeenAt())
+                .build());
+
+        ApiResponseDto<Page<PendingDeviceChangeDto>> responseDto = ApiResponseDto.<Page<PendingDeviceChangeDto>>builder()
+                .success(true)
+                .message("PENDING REQUESTS FETCHED")
+                .data(dtoPage)
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @Transactional
+    public ResponseEntity<ApiResponseDto<Void>> approveDeviceChange(
+            String studentUserId, Authentication authentication) {
+
+        // 3. Check the audit table cleanly
+        Optional<DeviceBindingAudit> auditOpt = auditRepo.findTopByUserIdOrderByPerformedAtDesc(studentUserId);
+        if (auditOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("No audit history found for this user") // Fixed copy-paste text here
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        DeviceBindingAudit audit = auditOpt.get();
+
+        if (audit.getAction() != AuditAction.PENDING) {
+            return ResponseEntity.status(HttpStatus.ALREADY_REPORTED).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("This request is already "+audit.getAction())
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        // 1. Find the existing binding
+        Optional<DeviceBinding> bindingOpt = deviceBindingRepo.findByUser_UserId(studentUserId);
+        if (bindingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("No device bound for this user")
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        DeviceBinding binding = bindingOpt.get();
+
+        // 2. Safely check if a request was actually made (prevents NullPointerException too)
+        if (binding.getUnbindRequested() == null || !binding.getUnbindRequested()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("No pending device change request for this user")
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+
+
+
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        String adminUserId = userDetails.getUserId();
+
+        // 3. Verify Admin exists (for the audit log)
+//        User admin = userRepo.findByUserId(adminUserId)
+//                .orElseThrow(() -> new IllegalStateException("Admin not found"));
+
+        String oldHash = binding.getDeviceHardwareId();
+
+        // 4. ✅ DELETE the binding completely from the database
+        deviceBindingRepo.delete(binding);
+
+        if (audit.getAction() == AuditAction.PENDING) {
+            // ✅ UPDATE the existing row's state
+            audit.setAction(AuditAction.APPROVED);
+            audit.setPerformedBy(adminUserId);
+            audit.setPerformedAt(LocalDateTime.now()); // Update time to approval time
+
+            // Save updates the existing row because the ID is already present
+            auditRepo.save(audit);
+        }
+
+        // 6. Return success response
+        ApiResponseDto<Void> responseDto = ApiResponseDto.<Void>builder()
+                .success(true)
+                .message("Device unbind approved. Student can now bind a new device on login.")
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @Transactional
+    public ResponseEntity<ApiResponseDto<Void>> rejectDeviceChange(
+            String studentUserId, Authentication authentication) { // adminUserId is optional now if you don't use it, but good for future-proofing
+
+        Optional<DeviceBindingAudit> auditOpt = auditRepo.findTopByUserIdOrderByPerformedAtDesc(studentUserId);
+        if (auditOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("No audit history found for this user") // Fixed copy-paste text here
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        DeviceBindingAudit audit = auditOpt.get();
+
+        if (audit.getAction() != AuditAction.PENDING) {
+            return ResponseEntity.status(HttpStatus.ALREADY_REPORTED).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("This request is already "+audit.getAction())
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        // 1. Find the existing binding
+        Optional<DeviceBinding> bindingOpt = deviceBindingRepo.findByUser_UserId(studentUserId);
+        if (bindingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("No device bound for this user")
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        DeviceBinding binding = bindingOpt.get();
+
+        // 2. Safely check if a request was actually made (prevents NullPointerException too)
+        if (binding.getUnbindRequested() == null || !binding.getUnbindRequested()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponseDto.<Void>builder()
+                            .success(false)
+                            .message("No pending device change request for this user")
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        // 3. Check the audit table cleanly
+
+
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        String adminUserId = userDetails.getUserId();
+
+        String currentHash = binding.getDeviceHardwareId();
+
+        // 3. ✅ REJECT the request by just flipping the flag back to false
+        binding.setUnbindRequested(false);
+
+        // JPA's @Transactional will automatically save this change to the database!
+
+        // ✅ UPDATE the existing row's state
+        audit.setAction(AuditAction.REJECT);
+        audit.setPerformedBy(adminUserId);
+        audit.setPerformedAt(LocalDateTime.now()); // Update time to rejection time
+
+        // Save updates the existing row
+        auditRepo.save(audit);
+
+        // 4. Return success response (No audit log saved)
+        ApiResponseDto<Void> responseDto = ApiResponseDto.<Void>builder()
+                .success(true)
+                .message("Device change request rejected. Student remains bound to their current device.")
+                .timeStamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(responseDto);
+    }
+
+    public ResponseEntity<ApiResponseDto<String>> checkDeviceRequestStatus(String email, String password) {
+
+        // 1. Authenticate the user
+        Authentication authentication;
+        try {
+            authentication = authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    ApiResponseDto.<String>builder()
+                            .success(false)
+                            .message(MessagesEnum.FAILED_TO_LOGIN.getMessage())
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        MyUserDetails user = (MyUserDetails) authentication.getPrincipal();
+        String userId = user.getUserId();
+
+        // 2. Fetch their most recent audit log
+        Optional<DeviceBindingAudit> latestAuditOpt = auditRepo.findTopByUserIdOrderByPerformedAtDesc(userId);
+
+        AuditAction latestAction = latestAuditOpt.get().getAction();
+
+        // 4. Return the status string
+        return ResponseEntity.ok(
+                ApiResponseDto.<String>builder()
+                        .success(true)
+                        .message("Status fetched successfully")
+                        .data(latestAction.name())
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
+    private DeviceBindingAudit buildAudit(String userId, String oldHash, String newHash, AuditAction action, String performedBy) {
         DeviceBindingAudit audit = DeviceBindingAudit.builder()
                 .userId(userId)
                 .oldDeviceId(oldHash)
                 .newDeviceId(newHash)
+                .performedBy(performedBy)
                 .action(action)
                 .performedAt(LocalDateTime.now())
                 .build();

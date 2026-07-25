@@ -146,7 +146,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(OtpResponseException.class)
-    public ResponseEntity<ApiResponseDto<?>> otpResponseException(RoleResponseException ex){
+    public ResponseEntity<ApiResponseDto<?>> otpResponseException(OtpResponseException ex){
         ApiResponseDto<?> response= ApiResponseDto.builder()
                 .success(false)
                 .message("INVALID Otp PROBLEM")

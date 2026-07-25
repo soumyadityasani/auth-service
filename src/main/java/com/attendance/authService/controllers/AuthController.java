@@ -118,8 +118,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-password-email")
-    public ResponseEntity<ApiResponseDto<?>> verifyforgotPassword(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email, @RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String otp){
-        return authService.verifyEmailOTp(email,otp);
+    public ResponseEntity<ApiResponseDto<?>> verifyforgotPassword(@RequestBody VerifyForgotPasswordDto requestDto){
+        return authService.verifyEmailOTp(requestDto.getEmail(),requestDto.getOtp());
     }
 
     @PreAuthorize("hasAuthority('MANAGE_ROLE')")
@@ -184,6 +184,30 @@ public class AuthController {
         return whiteListService.addEmailRoleFaculty(request);
     }
 
+    @PostMapping("/device-request-change")
+    public ResponseEntity<ApiResponseDto<Void>> requestDeviceChange(@RequestBody DeviceChangeRequestDto requestDto) {
+        return authService.requestDeviceChange(requestDto.getEmail(), requestDto.getPassword());
+    }
+
+    @GetMapping("/device-request-pending")
+    public ResponseEntity<ApiResponseDto<Page<PendingDeviceChangeDto>>> getPending(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, Authentication authentication) {
+        return authService.getPendingDeviceChanges(page, size,authentication);
+    }
+
+    @PostMapping("/device-request-approve")
+    public ResponseEntity<ApiResponseDto<Void>> approve(@RequestBody DeviceRequestApproveDto requestDto, Authentication auth) {
+        return authService.approveDeviceChange(requestDto.getStudentUserId(), auth);
+    }
+
+    @PostMapping("/device-request-reject")
+    public ResponseEntity<ApiResponseDto<Void>> reject(@RequestBody DeviceRequestApproveDto requestDto, Authentication auth) {
+        return authService.rejectDeviceChange(requestDto.getStudentUserId(), auth);
+    }
+
+    @GetMapping("/device-request-status")
+    public ResponseEntity<ApiResponseDto<String>> checkStatus(@RequestBody DeviceChangeRequestDto requestDto) {
+        return authService.checkDeviceRequestStatus(requestDto.getEmail(), requestDto.getPassword());
+    }
 
     @GetMapping("/get-all-students")
     public ResponseEntity<ApiResponseDto<Page<StudentResponseDto>>> getAllStudents(

@@ -21,7 +21,7 @@ public class User {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     @Size(max = 20, min = 3)
     private String userId;
 

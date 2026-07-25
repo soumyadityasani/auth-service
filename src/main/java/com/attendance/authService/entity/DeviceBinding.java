@@ -27,7 +27,7 @@ public class DeviceBinding {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "device_hardware_id", nullable = false)
+    @Column(name = "device_hardware_id", nullable = true)
     private String deviceHardwareId;
 
     @Column(name = "bound_at", nullable = false)

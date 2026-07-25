@@ -1,7 +1,8 @@
 package com.attendance.authService.enums;
 
 public enum AuditAction {
-    BIND,
-    UNBIND,
-    REBIND
+    PENDING,
+    APPROVED,
+    REBIND,
+    REJECT,
 }
