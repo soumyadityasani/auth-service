@@ -1155,73 +1155,88 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ApiResponseDto<?>> assignRolesToUser(AssignOrRemoveRoleFromUserRequestDto requestDto) {
 
-        //FIND THE USER BY USERNAME
-        User user = userRepo.findByUsername(requestDto.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(ErrorCodeEnum.S_404.getMessage()));
+        try {
 
-        //TAKE THE LIST OF EXISTING ROLES OF THAT USER
-        List<UserRole> userRoles = user.getUserRoles();
 
-        //TAKE THE LIST OF EXISTING ROLES LONG OF THAT USER
-        Set<Long> existingRoleIds = userRoles.stream()
-                .map(UserRole::getRoleId)
-                .collect(Collectors.toSet());
+            //FIND THE USER BY USERNAME
+            User user = userRepo.findByUsername(requestDto.getUsername())
+                    .orElseThrow(() -> new UserNotFoundException(ErrorCodeEnum.S_404.getMessage()));
 
-        //CALL FEIGN CLIENT TO GET ALL DETAILS ABOUT LIST OF ROLES
-        ApiResponseDto<List<RoleResponseDto>> roleResponse= roleClient.getRolesByNames(requestDto.getRoles());
+            //TAKE THE LIST OF EXISTING ROLES OF THAT USER
+            List<UserRole> userRoles = user.getUserRoles();
 
-        //CHECK IF ADMIN ROLE IF PRESENT TO DELETE , RESTRICT IT
-        boolean isAdminPresent = Optional.ofNullable(roleResponse.getData())
-                .orElseThrow(()-> new RoleResponseException(roleResponse.getMessage()))
-                .stream()
-                .anyMatch(role -> role.getRole().equalsIgnoreCase("ADMIN"));
+            //TAKE THE LIST OF EXISTING ROLES LONG OF THAT USER
+            Set<Long> existingRoleIds = userRoles.stream()
+                    .map(UserRole::getRoleId)
+                    .collect(Collectors.toSet());
 
-        if (isAdminPresent) {
-            throw new AdminRoleDeletionException(ErrorCodeEnum.S_403.name());
-        }
+            //CALL FEIGN CLIENT TO GET ALL DETAILS ABOUT LIST OF ROLES
+            ApiResponseDto<List<RoleResponseDto>> roleResponse = roleClient.getRolesByNames(requestDto.getRoles());
 
-        //USING OPTIONAL TO ASSUME THAT roleResponse.getData() IS NOT NULL , BUT IF NULL THEN THROW EXCEPTION THAT COME FROM ROLE PERMISSION SERVICE IN MEGGASE OF RESPONSE
-        //USING STREAM PERORMING SOME PROCESSING TASK TO CONVERT TO LIST OF LONG OF ROLE IDS THAT REMOVE
-        List<RoleResponseDto> roles= Optional.of(roleResponse.getData())
-                .orElseThrow(()-> new RoleResponseException(roleResponse.getMessage()))
-                .stream()
-                .filter(role-> !existingRoleIds.contains(role.getId()))
-                .toList();
+            //CHECK IF ADMIN ROLE IF PRESENT TO DELETE , RESTRICT IT
+            boolean isAdminPresent = Optional.ofNullable(roleResponse.getData())
+                    .orElseThrow(() -> new RoleResponseException(roleResponse.getMessage()))
+                    .stream()
+                    .anyMatch(role -> role.getRole().equalsIgnoreCase("ADMIN"));
 
-        List<RoleResponseDto> newRoles = roles.stream()
-                .filter(role -> !existingRoleIds.contains(role.getId()))
-                .toList();
+            if (isAdminPresent) {
+                throw new AdminRoleDeletionException(ErrorCodeEnum.S_403.name());
+            }
 
-        List<UserRole> newUserRoles = newRoles
-                .stream()
-                .map(role -> UserRole.builder()
-                        .user(user)
-                        .roleId(role.getId())
-                        .build())
-                .toList();
+            //USING OPTIONAL TO ASSUME THAT roleResponse.getData() IS NOT NULL , BUT IF NULL THEN THROW EXCEPTION THAT COME FROM ROLE PERMISSION SERVICE IN MEGGASE OF RESPONSE
+            //USING STREAM PERORMING SOME PROCESSING TASK TO CONVERT TO LIST OF LONG OF ROLE IDS THAT REMOVE
+            List<RoleResponseDto> roles = Optional.of(roleResponse.getData())
+                    .orElseThrow(() -> new RoleResponseException(roleResponse.getMessage()))
+                    .stream()
+                    .filter(role -> !existingRoleIds.contains(role.getId()))
+                    .toList();
 
-        if(newUserRoles.isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            List<RoleResponseDto> newRoles = roles.stream()
+                    .filter(role -> !existingRoleIds.contains(role.getId()))
+                    .toList();
+
+            List<UserRole> newUserRoles = newRoles
+                    .stream()
+                    .map(role -> UserRole.builder()
+                            .user(user)
+                            .roleId(role.getId())
+                            .build())
+                    .toList();
+
+            if (newUserRoles.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        ApiResponseDto.builder()
+                                .success(false)
+                                .message("NO NEW ROLES ASSIGNED")
+                                .data(null)
+                                .timeStamp(LocalDateTime.now())
+                                .build());
+            }
+
+            userRoles.addAll(newUserRoles);
+            userRepo.save(user);
+
+            return ResponseEntity.ok(
+                    ApiResponseDto.builder()
+                            .success(true)
+                            .message(newRoles.size() + " NEW ROLES ASSIGNED SUCCESSFUL ")
+                            .data(null)
+                            .timeStamp(LocalDateTime.now())
+                            .build());
+        }catch (Exception e){
+            e.printStackTrace();
+
+            return ResponseEntity.ok(
                     ApiResponseDto.builder()
                             .success(false)
-                            .message("NO NEW ROLES ASSIGNED")
+                            .message("GONDOGOL")
                             .data(null)
                             .timeStamp(LocalDateTime.now())
                             .build());
         }
-
-        userRoles.addAll(newUserRoles);
-        userRepo.save(user);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.builder()
-                        .success(true)
-                        .message(newRoles.size()+" NEW ROLES ASSIGNED SUCCESSFUL ")
-                        .data(null)
-                        .timeStamp(LocalDateTime.now())
-                        .build());
     }
 
     public ResponseEntity<ApiResponseDto<Long>> getStudentCount(String department, String academic_year,String semester) {

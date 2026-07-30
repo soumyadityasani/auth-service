@@ -204,7 +204,7 @@ public class AuthController {
         return authService.rejectDeviceChange(requestDto.getStudentUserId(), auth);
     }
 
-    @GetMapping("/device-request-status")
+    @PostMapping("/device-request-status")
     public ResponseEntity<ApiResponseDto<String>> checkStatus(@RequestBody DeviceChangeRequestDto requestDto) {
         return authService.checkDeviceRequestStatus(requestDto.getEmail(), requestDto.getPassword());
     }
