@@ -1916,6 +1916,17 @@ public class AuthService {
         // 2. Fetch their most recent audit log
         Optional<DeviceBindingAudit> latestAuditOpt = auditRepo.findTopByUserIdOrderByPerformedAtDesc(userId);
 
+        if (latestAuditOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ApiResponseDto.<String>builder()
+                            .success(false)
+                            .message("NO_DEVICE_FOUND")
+                            .data("NO_REQUEST_DEVICE_CHANGE_FOUND")
+                            .timeStamp(LocalDateTime.now())
+                            .build()
+            );
+        }
+
         AuditAction latestAction = latestAuditOpt.get().getAction();
 
         // 4. Return the status string
