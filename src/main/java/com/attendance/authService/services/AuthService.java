@@ -121,6 +121,8 @@ public class AuthService {
                 ()-> new EmailNotFoundException("S_404")
         );
 
+
+
         //CHECK FOR STUDENT EMAIL WHITELIST
 //        if (!whiteListService.isEligible(requestDto.getEmail())) {
 //
@@ -132,19 +134,35 @@ public class AuthService {
 //            );
 //        }
 
-        List<String> uniqueRoles = email.getAssignedRole().stream()
-                .distinct()
-                .toList();
+//        List<String> uniqueRoles = email.getAssignedRole().stream()
+//                .distinct()
+//                .toList();
 
         // REMOVE DUPLICATE ROLES
 //        List<String> uniqueRoles = requestDto.getRole().stream()
 //                .distinct()
 //                .toList();
 
+        // 🚨 1. RESTRICT ROLES DURING REGISTRATION
+        List<String> allowedRegistrationRoles = List.of("STUDENT", "TEACHER");
+
+        List<String> validRolesForRegistration = email.getAssignedRole().stream()
+                .filter(allowedRegistrationRoles::contains) // ONLY allow Student, Teacher, Admin
+                .distinct()
+                .toList();
+
+        if (validRolesForRegistration.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ApiResponseDto<>(false,
+                            "REGISTRATION FAILED: NO VALID BASE ROLES (STUDENT/TEACHER/ADMIN) FOUND IN WHITELIST",
+                            null, LocalDateTime.now())
+            );
+        }
+
         // FETCH ROLES
         ApiResponseDto<List<RoleResponseDto>> roleResponse;
         try {
-            roleResponse = roleClient.getRolesByNames(uniqueRoles);
+            roleResponse = roleClient.getRolesByNames(validRolesForRegistration);
         } catch (Exception e) {
             throw new RuntimeException("Role service unavailable");
         }
@@ -1407,6 +1425,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public ResponseEntity<ApiResponseDto<?>> assignHod(AssignHodOrCoordinatorRequest request) {
 
         Optional<Hod> existingHod = hodRepo.findByDepartmentAndAcademicYearAndSemesterAndActiveTrue(
@@ -1437,6 +1456,14 @@ public class AuthService {
 
         hodRepo.save(hod);
 
+        try {
+
+            // ✅ 2. SYNC ROLE (Assign "HOD" role if they don't have it)
+            syncRoleToUser(user, "HOD");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return ResponseEntity.ok().body(
                 new ApiResponseDto<>(
                         true,
@@ -1447,6 +1474,7 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ApiResponseDto<?>> updateHod(UpdateHodOrCoordinatorRequest request) {
         User hod= userRepo.findByUserId(request.getUserId()).orElseThrow(()-> new UserNotFoundException("S-404"));
 
@@ -1484,6 +1512,40 @@ public class AuthService {
         );
     }
 
+    @Transactional
+    public ResponseEntity<ApiResponseDto<?>> deassignHod(AssignHodOrCoordinatorRequest request) {
+        User user = userRepo.findByUserId(request.getUserId())
+                .orElseThrow(()-> new UserNotFoundException("S-404"));
+
+        // ✅ 1. FIND & DELETE THE HOD RECORD
+        Optional<Hod> existingHod = hodRepo.findByDepartmentAndAcademicYearAndSemesterAndActiveTrue(
+                request.getDepartment(), request.getAcademicYear(), request.getSemester()
+        );
+
+        if (existingHod.isPresent() && existingHod.get().getHod().getId().equals(user.getId())) {
+            hodRepo.delete(existingHod.get());
+        }
+
+        // ✅ 2. SYNC ROLE REMOVAL (If they have no other HOD assignments, remove the HOD role)
+        boolean isStillHodElsewhere = hodRepo.existsByHodAndActiveTrue(user);
+        if (!isStillHodElsewhere) {
+            removeRoleFromUserDirectly(user, "HOD");
+        }
+
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "HOD SUCCESSFULLY DEASSIGNED", null, LocalDateTime.now()));
+    }
+
+    // 🔁 Helper Method
+    private void removeRoleFromUserDirectly(User user, String roleName) {
+        ApiResponseDto<List<RoleResponseDto>> roleResponse = roleClient.getRolesByNames(List.of(roleName));
+        if (roleResponse != null && roleResponse.getData() != null && !roleResponse.getData().isEmpty()) {
+            Long targetRoleId = roleResponse.getData().get(0).getId();
+            user.getUserRoles().removeIf(ur -> ur.getRoleId().equals(targetRoleId));
+            userRepo.save(user); // Cascade deletes the UserRole
+        }
+    }
+
+    @Transactional
     public ResponseEntity<ApiResponseDto<?>> assignCoordinator(AssignHodOrCoordinatorRequest request) {
 
         Optional<Coordinator> existingCoordinator = coordinatorRepo.findByDepartmentAndAcademicYearAndSemesterAndActiveTrue(
@@ -1514,6 +1576,9 @@ public class AuthService {
 
         coordinatorRepo.save(coordinator);
 
+        // ✅ 2. SYNC ROLE (Assign "HOD" role if they don't have it)
+        syncRoleToUser(user, "COORDINATOR");
+
         return ResponseEntity.ok().body(
                 new ApiResponseDto<>(
                         true,
@@ -1524,6 +1589,7 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ApiResponseDto<?>> updateCoordinator(UpdateHodOrCoordinatorRequest request) {
         User coordinator = userRepo.findByUserId(request.getUserId()).orElseThrow(()-> new UserNotFoundException("S-404"));
 
@@ -1559,6 +1625,29 @@ public class AuthService {
                         LocalDateTime.now()
                 )
         );
+    }
+
+    @Transactional
+    public ResponseEntity<ApiResponseDto<?>> deassignCoordinator(AssignHodOrCoordinatorRequest request) {
+        User user = userRepo.findByUserId(request.getUserId())
+                .orElseThrow(()-> new UserNotFoundException("S-404"));
+
+        // ✅ 1. FIND & DELETE THE HOD RECORD
+        Optional<Coordinator> existingCoordinator = coordinatorRepo.findByDepartmentAndAcademicYearAndSemesterAndActiveTrue(
+                request.getDepartment(), request.getAcademicYear(), request.getSemester()
+        );
+
+        if (existingCoordinator.isPresent() && existingCoordinator.get().getCoordinator().getId().equals(user.getId())) {
+            coordinatorRepo.delete(existingCoordinator.get());
+        }
+
+        // ✅ 2. SYNC ROLE REMOVAL (If they have no other HOD assignments, remove the HOD role)
+        boolean isStillCoordinatorElsewhere = coordinatorRepo.existsByCoordinatorAndActiveTrue(user);
+        if (!isStillCoordinatorElsewhere) {
+            removeRoleFromUserDirectly(user, "COORDINATOR");
+        }
+
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "Coordinator SUCCESSFULLY DEASSIGNED", null, LocalDateTime.now()));
     }
 
     @Transactional
@@ -1951,5 +2040,21 @@ public class AuthService {
                 .build();
 
         return audit;
+    }
+
+    // 🔁 Helper Method to keep code clean (Reuse this in assignCoordinator!)
+    private void syncRoleToUser(User user, String roleName) {
+        ApiResponseDto<List<RoleResponseDto>> roleResponse = roleClient.getRolesByNames(List.of(roleName));
+        if (roleResponse != null && roleResponse.getData() != null && !roleResponse.getData().isEmpty()) {
+            Long targetRoleId = roleResponse.getData().get(0).getId();
+
+            boolean alreadyHasRole = user.getUserRoles().stream()
+                    .anyMatch(ur -> ur.getRoleId().equals(targetRoleId));
+
+            if (!alreadyHasRole) {
+                user.getUserRoles().add(new UserRole(user, targetRoleId));
+                userRepo.save(user); // Save triggers cascade to UserRole
+            }
+        }
     }
 }

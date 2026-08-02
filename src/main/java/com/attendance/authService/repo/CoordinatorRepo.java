@@ -18,4 +18,6 @@ public interface CoordinatorRepo extends JpaRepository<Coordinator, UUID> {
     Optional<Coordinator> findByCoordinator_UserId(String coordinatorUserId);
 
     List<Coordinator> findAllByCoordinator_UserIdAndActiveTrue(String coordinatorUserId);
+
+    boolean existsByCoordinatorAndActiveTrue(User user);
 }

@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,6 +29,7 @@ public class Hod {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="hod", nullable=false)
+    @OnDelete(action = OnDeleteAction.CASCADE) // ✅ ADD THIS
     private User hod;
 
     @Column(nullable = false)

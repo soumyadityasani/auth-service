@@ -149,24 +149,39 @@ public class AuthController {
 //        return authService.getAllFaculty();
 //    }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     @PostMapping("/assign-hod")
     public ResponseEntity<ApiResponseDto<?>> assignHod(@RequestBody AssignHodOrCoordinatorRequest request){
         return authService.assignHod(request);
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     @PutMapping("/update-hod")
     public ResponseEntity<ApiResponseDto<?>> updateHod(@RequestBody UpdateHodOrCoordinatorRequest request){
         return authService.updateHod(request);
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @PostMapping("/deassign-hod")
+    public ResponseEntity<ApiResponseDto<?>> deassignHod(@RequestBody AssignHodOrCoordinatorRequest request) {
+        return authService.deassignHod(request);
+    }
+
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     @PostMapping("/assign-coordinator")
     public ResponseEntity<ApiResponseDto<?>> assignCoordinator(@RequestBody AssignHodOrCoordinatorRequest request){
         return authService.assignCoordinator(request);
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     @PutMapping("/update-coordinator")
     public ResponseEntity<ApiResponseDto<?>> updateCoordinator(@RequestBody UpdateHodOrCoordinatorRequest request){
         return authService.updateCoordinator(request);
+    }
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @PostMapping("/deassign-coordinator")
+    public ResponseEntity<ApiResponseDto<?>> deassignCoordinator(@RequestBody AssignHodOrCoordinatorRequest request) {
+        return authService.deassignCoordinator(request);
     }
 
     @PostMapping("/get-hod-coordinator")

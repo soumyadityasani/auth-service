@@ -20,7 +20,7 @@ public class EmailRoleWhiteList {
     @Convert(converter = EncryptionConverter.class) // ✅ ADD THIS
     private String email;
 
-    private List<String> assignedRole;   // ✅ admin sets this: "ROLE_FACULTY", "ROLE_HOD" etc
+    private List<String> assignedRole;   // ✅ admin sets this: "FACULTY", "HOD" etc
 
     private boolean used;          // prevent re-registration
 }

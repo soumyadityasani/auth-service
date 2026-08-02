@@ -54,6 +54,13 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private DeviceBinding deviceBinding;
 
+    // ✅ ADD THESE TO PREVENT ORPHANS
+    @OneToMany(mappedBy = "hod", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Hod> hodAssignments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "coordinator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Coordinator> coordinatorAssignments = new ArrayList<>();
+
     @Temporal(TemporalType.TIMESTAMP)  //Specify date-time precision
     @Column(name="register_date", updatable = false)  //once inserted cant be update later
     private Date registerDate= new Date();

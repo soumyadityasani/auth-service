@@ -15,4 +15,5 @@ public interface HodRepo extends JpaRepository<Hod, UUID> {
 
     Optional<Hod> findByDepartmentAndAcademicYearAndSemesterAndActiveTrue(String department, String academicYear, String semester);
 
+    boolean existsByHodAndActiveTrue(User user);
 }
